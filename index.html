@@ -312,13 +312,15 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").match
 const RYTHMES = [{ n: "Découverte", i: 4, e: 5 }, { n: "Équilibre", i: 5, e: 5 }, { n: "Apaisement", i: 4, e: 6 }];
 const SONS = ["Silence", "Bol chantant", "Musique douce", "Musique et bol"];
 const GUIDES = ["Image seule", "Mots à l'écran", "Mots et voix"];
-const S = { scene: "maree", rythme: 1, inh: 5, exh: 5, minutes: 5, son: 2, vol: 60, guide: 1 };
+const S = { scene: "maree", rythme: 1, inh: 5, exh: 5, minutes: 5, son: 3, vol: 60, guide: 1 };
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 Object.assign(S, store.get("souffle.reglages", {}));
 S.scene = "maree";
+// v2 : le bol marque désormais chaque changement (toutes les 5 s) ; on l'active pour tous une fois
+if (S.sonV !== 2) { S.son = 3; S.sonV = 2; }
 const wantsMusic = () => S.son === 2 || S.son === 3;
 const wantsBowl = () => S.son === 1 || S.son === 3;
 
@@ -539,7 +541,7 @@ function audioLevel() {
   glide(A.master.gain, on ? 1.5 * S.vol / 100 : 0, on ? 0.6 : 0.4);
   if (!wantsMusic()) glide(A.drone.gain, 0, 0.5);
 }
-function audioStart() { if (!AC) return; audioAlive(); audioLevel(); if (wantsMusic()) glide(A.drone.gain, 0.14, 1.5); }
+function audioStart() { if (!AC) return; audioAlive(); audioLevel(); if (wantsMusic()) glide(A.drone.gain, 0.07, 1.5); }
 function audioStop() { if (AC && A) glide(A.master.gain, 0, 0.8); }
 function tone(f, vol, when, decay, partial) {
   const t = Math.max(when || 0, AC.currentTime);
@@ -564,12 +566,13 @@ function audioPhase(inhale, dur) {
   if (!AC || !A) return;
   audioAlive();
   if (wantsMusic()) {
-    glide(A.drone.gain, inhale ? 0.26 : 0.12, dur / 2.5);
+    glide(A.drone.gain, inhale ? 0.12 : 0.055, dur / 2.5);
     const pool = inhale ? NOTES.slice(2) : NOTES.slice(0, 4);
-    tone(pool[Math.floor(Math.random() * pool.length)], 0.16, AC.currentTime + 0.3, 5, 0.2);
-    if (Math.random() < 0.4) tone(pool[Math.floor(Math.random() * pool.length)], 0.09, AC.currentTime + dur * 0.55, 4, 0.2);
+    tone(pool[Math.floor(Math.random() * pool.length)], 0.08, AC.currentTime + 0.3, 5, 0.2);
+    if (Math.random() < 0.4) tone(pool[Math.floor(Math.random() * pool.length)], 0.045, AC.currentTime + dur * 0.55, 4, 0.2);
   }
-  if (wantsBowl()) singingBowl(inhale ? 440 : 392, inhale ? 0.3 : 0.18);
+  // signal net à chaque changement : bol aigu (la) à l'inspiration, plus grave (mi) à l'expiration
+  if (wantsBowl()) singingBowl(inhale ? 440 : 329.63, inhale ? 0.32 : 0.28);
 }
 function say(text) {
   if (S.guide !== 2 || !("speechSynthesis" in window)) return;
