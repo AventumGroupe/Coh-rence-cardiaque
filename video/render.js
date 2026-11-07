@@ -5,6 +5,7 @@ const { spawn } = require("child_process");
 const [, , page_path, out, minArg] = process.argv;
 const FPS = 30, STEP = 1000 / FPS;
 const MIN = +(minArg || 5);
+const FROM = +(process.argv[5] || 0) * 1000;
 const TITLE = 6000, INTRO = 4000, RUN = MIN * 60000, OUTRO = 9000;
 const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
 
@@ -39,6 +40,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
     .ov h1 { font-family: "Marcellus", Georgia, serif; font-weight: 400; font-size: 6.2rem; margin: 0; letter-spacing: .01em; }
     .ov p { font-family: "Jost", system-ui, sans-serif; font-size: 2rem; margin: 0; color: rgba(244,236,222,.85); }
     .ov small { font-family: "Jost", system-ui, sans-serif; font-size: 1.4rem; color: rgba(244,236,222,.7); letter-spacing: .06em; }
+    #ov-end { background: radial-gradient(ellipse at center, rgba(13,20,34,.88), rgba(13,20,34,.6) 80%); }
     .wm { position: fixed; right: 48px; bottom: 40px; width: 170px; opacity: .75; pointer-events: none; }
   `});
   await p.evaluate(() => {
@@ -55,6 +57,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
   const fade = (t, a, b, f = 800) => Math.max(0, Math.min(1, (t - a) / f, (b - t) / f));
   let t = 0, started = false, n = 0, ended = false;
   const frames = Math.round(TOTAL / STEP);
+let shot = 0;
   const t0 = Date.now();
   for (let i = 0; i < frames; i++, t += STEP) {
     if (!started && t >= TITLE) { started = true; await p.evaluate(() => document.getElementById("start").click()); }
@@ -65,6 +68,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
       document.getElementById("wm").style.opacity = wm;
     }, { dt: STEP, t, ov1: fade(t, -1000, TITLE - 200, 900), ov2: fade(t, TITLE + INTRO + RUN + 600, TOTAL + 2000, 1200),
          wm: 0.7 * fade(t, TITLE + 800, TITLE + INTRO + RUN + 400, 1200) });
+    if (t < FROM - 1) continue;
     const buf = await p.screenshot({ type: "jpeg", quality: 92 });
     if (!ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once("drain", r));
     if (++n % 900 === 0) console.log(`${n}/${frames} images (${Math.round((Date.now() - t0) / 1000)} s)`);

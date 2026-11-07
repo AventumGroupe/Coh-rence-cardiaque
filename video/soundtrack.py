@@ -1,5 +1,5 @@
-"""Bande-son de la vidéo : mêmes sons que l'application (accord tenu qui enfle à l'inspiration,
-notes pentatoniques, bol chantant), calés sur le minutage de video/render.js."""
+"""Bande-son de la vidéo : mêmes sons que l'application (bol tibétain grave à l'inspiration,
+aigu à l'expiration, notes de cithare très douces), calés sur le minutage de video/render.js."""
 import numpy as np, wave, sys
 
 SR = 44100
@@ -13,72 +13,45 @@ N = int(TOTAL * SR)
 t = np.arange(N, dtype=np.float64) / SR
 rng = np.random.default_rng(365)
 
-# ---- enveloppe de l'accord (100 points par seconde, lissage exponentiel comme setTargetAtTime)
-CR = 100
-steps = int(TOTAL * CR) + 1
-env = np.zeros(steps); v = 0.0
+# ---- minutage des phases
 phases = []
 k = 0
 while START_RUN + k * (INH + EXH) < END_RUN - 0.01:
-    s = START_RUN + k * (INH + EXH)
-    phases.append((s, True)); phases.append((s + INH, False)); k += 1
-def target_at(x):
-    if x < 1.0: return 0.0, 1.5
-    if x < START_RUN: return 0.12, 1.5
-    if x >= END_RUN: return (0.08, 2.0) if x < TOTAL - 4 else (0.0, 1.2)
-    i = int((x - START_RUN) // ((INH + EXH) / 2))
-    inhale = i % 2 == 0
-    return (0.26 if inhale else 0.12), (INH if inhale else EXH) / 2.5
-for i in range(steps):
-    x = i / CR; tg, tc = target_at(x)
-    v += (tg - v) * (1 - np.exp(-1 / (CR * tc)))
-    env[i] = v
-drone_env = np.interp(t, np.arange(steps) / CR, env).astype(np.float32)
+    s0 = START_RUN + k * (INH + EXH)
+    phases.append((s0, True)); phases.append((s0 + INH, False)); k += 1
 
-# ---- accord : ré, la, ré (voix médiums audibles sur téléphone et ordinateur)
-def tri(f):  # onde triangle douce (trois harmoniques impaires, aigus atténués)
-    w = 2 * np.pi * f * t
-    return (np.sin(w) - np.sin(3 * w) / 9 + np.sin(5 * w) / 50).astype(np.float32)
-voices = [(146.83, 0.10, "sine"), (293.66, 0.45, "tri"), (294.1, 0.30, "sine"), (440.0, 0.32, "tri"), (587.33, 0.16, "sine")]
-drone = np.zeros(N, np.float32)
-for i, (f, g, kind) in enumerate(voices):
-    lfo = 1 + 0.3 * np.sin(2 * np.pi * (0.07 + i * 0.031) * t)
-    sig = tri(f) if kind == "tri" else np.sin(2 * np.pi * f * t).astype(np.float32)
-    drone += (g * lfo).astype(np.float32) * sig
-drone *= drone_env
-
-# ---- notes et bol
 notes = np.zeros(N, np.float32)
-def add_tone(at, f, vol, decay, partial=0.2):
-    for m, a in [(1, 1.0), (2, partial)]:
-        d = decay / m; L = int((d + 0.05) * SR); s0 = int(at * SR)
-        if s0 >= N: return
-        L = min(L, N - s0); tt = np.arange(L) / SR
-        peak = vol * a
-        e = np.where(tt < 0.08, peak * (0.0001 / peak) ** np.clip(1 - tt / 0.08, 0, 1), peak * (0.0001 / peak) ** np.clip((tt - 0.08) / (d - 0.08), 0, 1))
-        notes[s0:s0 + L] += (e * np.sin(2 * np.pi * f * m * tt)).astype(np.float32)
-def add_bowl(at, f, vol):
-    for m, a, d in [(1, 1.0, 7.0), (2.76, 0.22, 4.0)]:
-        for beat in (0, 0.6):
-            L = int((d + 0.05) * SR); s0 = int(at * SR)
-            if s0 >= N: continue
-            L = min(L, N - s0); tt = np.arange(L) / SR
-            peak = vol * a * 0.5
-            e = np.where(tt < 0.03, peak * (0.0001 / peak) ** np.clip(1 - tt / 0.03, 0, 1), peak * (0.0001 / peak) ** np.clip((tt - 0.03) / (d - 0.03), 0, 1))
-            notes[s0:s0 + L] += (e * np.sin(2 * np.pi * (f * m + beat) * tt)).astype(np.float32)
-NOTES = [587.33, 698.46, 783.99, 880.0, 1046.5, 1174.66]
+def partial(at, f, peak, attack, decay):
+    L = int((decay + 0.05) * SR); s0 = int(at * SR)
+    if s0 >= N or peak <= 0: return
+    L = min(L, N - s0); tt = np.arange(L) / SR
+    e = np.where(tt < attack, peak * (0.0001 / peak) ** np.clip(1 - tt / attack, 0, 1),
+                 peak * (0.0001 / peak) ** np.clip((tt - attack) / (decay - attack), 0, 1))
+    notes[s0:s0 + L] += (e * np.sin(2 * np.pi * f * tt)).astype(np.float32)
+def bowl(at, f, vol):  # bol tibétain, identique à l'application
+    for i, (m, a, d) in enumerate([(1, 1, 9), (2.71, 0.4, 6), (5.33, 0.16, 3.5), (8.8, 0.05, 2)]):
+        partial(at, f * m, vol * a * 0.6, 0.012, d)
+        if i < 2: partial(at, f * m + (1.1 if i else 0.4), vol * a * 0.3, 0.012, d * 0.9)
+def cithare(at, f, vol):
+    for m, a, d in [(1, 1, 3.6), (2, 0.32, 2.0), (3, 0.12, 1.2), (4, 0.05, 0.8)]:
+        partial(at, f * m, vol * a, 0.006, d)
+CITHARE = [293.66, 329.63, 369.99, 440.0, 493.88, 587.33]
+idx = 2
 for at, inhale in phases:
     dur = INH if inhale else EXH
-    pool = NOTES[2:] if inhale else NOTES[:4]
-    add_tone(at + 0.3, pool[rng.integers(len(pool))], 0.16, 5)
-    if rng.random() < 0.4: add_tone(at + dur * 0.55, pool[rng.integers(len(pool))], 0.09, 4)
-    add_bowl(at, 440 if inhale else 392, 0.3 if inhale else 0.16)
-add_bowl(TITLE + 0.2, 392, 0.2)        # ouverture
-add_bowl(END_RUN + 0.6, 392, 0.25)     # fin de séance
+    bowl(at, 220 if inhale else 440, 0.34 if inhale else 0.2)   # grave à l'inspiration, aigu à l'expiration
+    def step():
+        global idx
+        if rng.random() < 0.7: idx = max(0, min(len(CITHARE) - 1, idx + (1 if inhale else -1)))
+        return CITHARE[idx]
+    cithare(at + dur * 0.32, step(), 0.07)
+    if rng.random() < 0.55: cithare(at + dur * 0.68, step(), 0.05)
+bowl(TITLE + 0.2, 220, 0.3)                        # ouverture
+bowl(END_RUN + 0.6, 220, 0.3); bowl(END_RUN + 1.8, 440, 0.12)   # fin de séance
 
 # ---- écho gauche / droite (retards 0,41 s et 0,57 s, réinjection 0,32, filtré)
-dry = drone + notes
-send = 0.28 * dry
+dry = notes
+send = 0.2 * dry
 def echo(x, delay, fb):
     D = int(delay * SR); e = np.zeros_like(x)
     for s in range(D, len(x), D):
@@ -93,8 +66,10 @@ def lowpass(x, fc):
         seg = x[s:s + B]; y = np.fft.irfft(np.fft.rfft(seg, B + taps) * F, B + taps)[:len(seg) + taps - 1]
         out[s:s + len(y)] += y.astype(np.float32)
     return out[(taps - 1) // 2:(taps - 1) // 2 + len(x)]
-L = dry + lowpass(echo(send, 0.41, 0.32), 1800)
-R = dry + lowpass(echo(send, 0.57, 0.32), 1800)
+dry = lowpass(dry, 3200)
+send = 0.2 * dry
+L = dry + lowpass(echo(send, 0.43, 0.28), 1600)
+R = dry + lowpass(echo(send, 0.61, 0.28), 1600)
 st = np.stack([L, R], 1) * 0.9
 # fondu de sécurité au tout début et à la fin, puis normalisation (crête -1 dBFS)
 fade = np.ones(N, np.float32); f1 = int(0.5 * SR); f2 = int(3 * SR)
