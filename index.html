@@ -328,7 +328,7 @@ const wantsMusic = () => S.son === 2 || S.son === 3;
 const wantsBowl = () => S.son === 1 || S.son === 3;
 
 const SUBS = {
-  maree: ["la marée monte", "la marée descend"],
+  maree: ["la marée descend", "la marée monte"],
   aube: ["le soleil se lève", "le soleil se couche"],
   lotus: ["le lotus s'ouvre", "le lotus se referme"],
   aurore: ["l'aurore s'élève", "l'aurore s'apaise"],
@@ -649,6 +649,8 @@ function drawStars(alpha, t) {
 
 /* ---------- Marée ---------- */
 function drawMaree(b, t) {
+  // la marée descend à l'inspiration et remonte à l'expiration
+  b = 1 - b;
   const hy = H * 0.40;
   ctx.fillStyle = vGrad(0, hy, [[0, "#1f3658"], [0.55, "#7a6b92"], [0.88, "#e9a58d"], [1, "#f8c793"]]); ctx.fillRect(0, 0, W, hy + 1);
   const sx = W * 0.5, sr = Math.min(W, H) * 0.055, sy = hy - sr * 0.55;
