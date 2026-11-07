@@ -52,7 +52,8 @@ jobs:
         with:
           tag_name: test-${{ github.run_number }}
           name: Version de test ${{ github.run_number }}
-          prerelease: true
+          prerelease: false
+          make_latest: true
           files: dist/coherence-cardiaque-test.apk
           body: |
             Version de test à installer sur un téléphone Android.
