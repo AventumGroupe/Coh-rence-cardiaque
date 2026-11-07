@@ -1,0 +1,59 @@
+# Construit l'application Android (APK de test) et la publie dans « Releases ».
+name: APK Android
+
+on:
+  push:
+    branches: [main]
+    paths: ["index.html", "android/**", "capacitor.config.json", "package.json", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Installer les dépendances
+        run: npm ci || npm install
+
+      - name: Copier l'application web dans le projet Android
+        run: npm run sync
+
+      - name: Construire l'APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Renommer l'APK
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk "dist/coherence-cardiaque-test.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coherence-cardiaque-apk
+          path: dist/coherence-cardiaque-test.apk
+
+      - name: Publier dans Releases (version de test)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-${{ github.run_number }}
+          name: Version de test ${{ github.run_number }}
+          prerelease: true
+          files: dist/coherence-cardiaque-test.apk
+          body: |
+            Version de test à installer sur un téléphone Android.
+            Sur le téléphone : télécharger le fichier .apk ci-dessous, l'ouvrir, puis autoriser l'installation depuis cette source si Android le demande.

@@ -355,6 +355,31 @@ const MOMENTS = [["matin", "Matin", 345], ["midi", "Midi", 645], ["soir", "Soir"
 const BYDAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"], DAYL = ["D", "L", "M", "M", "J", "V", "S"];
 const hhmm = (min) => `${Math.floor(min / 60)}:${String(min % 60).padStart(2, "0")}`;
 const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+/* Dans l'application Android (Capacitor), les rappels sont de vraies notifications du téléphone. */
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const LN = NATIVE && window.Capacitor.Plugins ? window.Capacitor.Plugins.LocalNotifications : null;
+let remTimer = null;
+async function scheduleNative() {
+  if (!LN) return false;
+  try {
+    let perm = await LN.checkPermissions();
+    if (perm.display !== "granted") perm = await LN.requestPermissions();
+    if (perm.display !== "granted") { REM.native = false; $("rem-note").textContent = "Les notifications sont refusées. Autorisez-les dans les réglages du téléphone, puis réessayez."; return false; }
+    const pend = await LN.getPending();
+    if (pend.notifications && pend.notifications.length) await LN.cancel({ notifications: pend.notifications.map(n => ({ id: n.id })) });
+    if (!REM.native) return true;
+    const list = [];
+    MOMENTS.forEach(([k, label, off], mi) => {
+      if (REM[k] > off) REM.days.forEach(d => list.push({
+        id: 100 + d * 10 + mi, title: "Cohérence cardiaque", body: `${label} : 5 minutes pour respirer.`,
+        schedule: { on: { weekday: d + 1, hour: Math.floor(REM[k] / 60), minute: REM[k] % 60 }, allowWhileIdle: true }
+      }));
+    });
+    if (list.length) await LN.schedule({ notifications: list });
+    return true;
+  } catch (e) { $("rem-note").textContent = "Impossible de programmer les rappels : " + (e && e.message ? e.message : e); return false; }
+}
+function rescheduleSoon() { if (!NATIVE || !REM.native) return; clearTimeout(remTimer); remTimer = setTimeout(scheduleNative, 600); }
 function nextStart(min) {
   const d = new Date(); d.setSeconds(0, 0);
   for (let i = 0; i < 8; i++) {
@@ -392,6 +417,15 @@ function renderRem() {
   const dTxt = days.length === 7 ? "Tous les jours" : days.join() === "1,2,3,4,5" ? "Lun – ven" : days.map(d => DAYL[d]).join(" ");
   $("rem-sum").textContent = days.length && active.length ? `${dTxt} · ${active.map(([k]) => hhmm(REM[k])).join(" · ")}` : "Aucun";
   const box = $("rem-links"); box.innerHTML = "";
+  if (NATIVE) {
+    const b = document.createElement("button"); b.className = "cal-link"; b.type = "button";
+    b.innerHTML = REM.native ? "<span>Rappels activés sur ce téléphone</span><span>Désactiver</span>" : "<span>Notifications du téléphone</span><span>Activer les rappels</span>";
+    b.addEventListener("click", async () => { REM.native = !REM.native; await scheduleNative(); renderRem(); });
+    box.appendChild(b);
+    $("rem-note").textContent = REM.native ? "Le téléphone vous prévient aux heures choisies, même quand l'application est fermée." : "Activez les rappels pour recevoir une notification aux heures choisies.";
+    store.set("souffle.rappels", REM);
+    return;
+  }
   if (!days.length || !active.length) { box.innerHTML = '<p class="note">Choisissez au moins un jour et un moment.</p>'; }
   else {
     active.forEach(([k, label]) => {
@@ -412,9 +446,9 @@ function renderRem() {
   store.set("souffle.rappels", REM);
 }
 document.querySelectorAll("#rem-days button").forEach(b => b.addEventListener("click", () => {
-  const d = +b.dataset.d; REM.days = REM.days.includes(d) ? REM.days.filter(x => x !== d) : [...REM.days, d]; renderRem();
+  const d = +b.dataset.d; REM.days = REM.days.includes(d) ? REM.days.filter(x => x !== d) : [...REM.days, d]; renderRem(); rescheduleSoon();
 }));
-MOMENTS.forEach(([k]) => $("s-" + k).addEventListener("input", e => { REM[k] = +e.target.value; renderRem(); }));
+MOMENTS.forEach(([k]) => $("s-" + k).addEventListener("input", e => { REM[k] = +e.target.value; renderRem(); rescheduleSoon(); }));
 
 /* ================= Journal 365 ================= */
 const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;

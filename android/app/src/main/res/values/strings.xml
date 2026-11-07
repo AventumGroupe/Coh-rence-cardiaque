@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cohérence cardiaque</string>
+    <string name="title_activity_main">Cohérence cardiaque</string>
+    <string name="package_name">com.softskillsacademie.coherence</string>
+    <string name="custom_url_scheme">com.softskillsacademie.coherence</string>
+</resources>

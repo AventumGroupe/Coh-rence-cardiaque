@@ -1,0 +1,10 @@
+{
+  "appId": "com.softskillsacademie.coherence",
+  "appName": "Cohérence cardiaque",
+  "webDir": "www",
+  "backgroundColor": "#0d1422",
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "LocalNotifications": { "smallIcon": "ic_stat_notify", "iconColor": "#F2B880" }
+  }
+}

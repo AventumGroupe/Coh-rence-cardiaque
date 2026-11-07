@@ -1,0 +1,19 @@
+{
+  "name": "coherence-cardiaque",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application de cohérence cardiaque (méthode 365) - Soft Skills Académie",
+  "scripts": {
+    "build": "node scripts/build-www.js",
+    "sync": "npm run build && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/local-notifications": "8.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "4.0.0",
+    "@capacitor/cli": "8.6.0"
+  }
+}

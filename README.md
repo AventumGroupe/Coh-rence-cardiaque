@@ -29,6 +29,10 @@ Au lieu de la classique boule qui monte et descend, ce sont des **paysages vivan
 
 Tous les paysages sont dessinés en temps réel (Canvas), sans image externe ni dépendance.
 
+## Application Android
+
+Le dossier `android/` contient le projet Capacitor. À chaque modification de `index.html` sur `main`, GitHub construit un APK de test (onglet **Actions**) et le publie dans **Releases**. Dans l'application Android, les rappels deviennent de vraies notifications du téléphone, et l'écran reste allumé pendant la séance.
+
 ## Utilisation
 
 Ouvrir `index.html` dans un navigateur (ordinateur ou téléphone). `souffle.html` est le même contenu sans l'en-tête HTML, utilisé pour la publication en artifact.
