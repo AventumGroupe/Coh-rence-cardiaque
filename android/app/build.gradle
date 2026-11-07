@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 
+def runNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
+
 android {
     namespace = "com.softskillsacademie.coherence"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,9 +9,9 @@ android {
         applicationId "com.softskillsacademie.coherence"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // numéro de version croissant : le numéro de construction GitHub (1 en local)
-        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger() + 10
-        versionName "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+        // numéro de version croissant : le numéro de construction GitHub (0 en local)
+        versionCode runNumber + 10
+        versionName "1.0." + runNumber
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
