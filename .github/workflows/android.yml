@@ -1,4 +1,5 @@
-# Construit l'application Android (APK de test) et la publie dans « Releases ».
+# Construit l'application Android et la publie dans « Releases ».
+# La clé de signature vient des secrets SIGNING_KEYSTORE (fichier .jks en base64) et SIGNING_PASSWORD.
 name: APK Android
 
 on:
@@ -13,6 +14,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SIGNING_KEYSTORE: ${{ secrets.SIGNING_KEYSTORE }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,31 +35,39 @@ jobs:
       - name: Copier l'application web dans le projet Android
         run: npm run sync
 
+      - name: Préparer la clé de signature
+        if: env.SIGNING_KEYSTORE != ''
+        run: |
+          echo "$SIGNING_KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "SIGNING_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
       - name: Construire l'APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
       - name: Renommer l'APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/debug/app-debug.apk "dist/coherence-cardiaque-test.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/coherence-cardiaque-test.apk"
 
       - uses: actions/upload-artifact@v4
         with:
           name: coherence-cardiaque-apk
           path: dist/coherence-cardiaque-test.apk
 
-      - name: Publier dans Releases (version de test)
+      # Lien de téléchargement direct, uniquement pour les APK signés avec la clé fixe.
+      - name: Publier la version (Release)
+        if: env.SIGNING_KEYSTORE != ''
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: test-${{ github.run_number }}
-          name: Version de test ${{ github.run_number }}
-          prerelease: false
+          tag_name: v1.0.${{ github.run_number }}
+          name: Cohérence cardiaque 1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
           make_latest: true
           files: dist/coherence-cardiaque-test.apk
           body: |
-            Version de test à installer sur un téléphone Android.
-            Sur le téléphone : télécharger le fichier .apk ci-dessous, l'ouvrir, puis autoriser l'installation depuis cette source si Android le demande.
-            Mise à jour : installer simplement le nouveau fichier par-dessus l'ancien, les réglages sont conservés.
+            Télécharger **coherence-cardiaque-test.apk** ci-dessous, l'ouvrir sur le téléphone puis toucher « Installer » ou « Mettre à jour ».
+            Lien permanent vers la dernière version :
+            https://github.com/${{ github.repository }}/releases/latest/download/coherence-cardiaque-test.apk

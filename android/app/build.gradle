@@ -19,23 +19,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // Clé de signature FIXE pour les versions de test : chaque nouvel APK s'installe par-dessus le précédent.
-    // (Pour Google Play, on utilisera une autre clé, gardée secrète.)
+    // Clé de signature fixe, fournie par les secrets GitHub (jamais stockée dans le dépôt) :
+    // indispensable pour qu'une nouvelle version s'installe par-dessus l'ancienne.
+    def releaseKeystore = System.getenv("SIGNING_KEYSTORE_FILE")
     signingConfigs {
-        test {
-            storeFile file("test-signature.keystore")
-            storePassword "coherence-test"
-            keyAlias "coherence-test"
-            keyPassword "coherence-test"
+        if (releaseKeystore != null) {
+            release {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv("SIGNING_PASSWORD")
+                keyAlias "aventum"
+                keyPassword System.getenv("SIGNING_PASSWORD")
+            }
         }
     }
     buildTypes {
-        debug {
-            signingConfig signingConfigs.test
-        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Sans clé fournie, signé avec la clé de debug pour rester installable.
+            signingConfig releaseKeystore != null ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
