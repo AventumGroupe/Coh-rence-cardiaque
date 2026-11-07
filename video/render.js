@@ -6,6 +6,7 @@ const [, , page_path, out, minArg] = process.argv;
 const FPS = 30, STEP = 1000 / FPS;
 const MIN = +(minArg || 5);
 const FROM = +(process.argv[5] || 0) * 1000;
+const TO = process.argv[6] ? +process.argv[6] * 1000 : Infinity;
 const TITLE = 6000, INTRO = 4000, RUN = MIN * 60000, OUTRO = 9000;
 const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
 
@@ -69,6 +70,7 @@ let shot = 0;
     }, { dt: STEP, t, ov1: fade(t, -1000, TITLE - 200, 900), ov2: fade(t, TITLE + INTRO + RUN + 600, TOTAL + 2000, 1200),
          wm: 0.7 * fade(t, TITLE + 800, TITLE + INTRO + RUN + 400, 1200) });
     if (t < FROM - 1) continue;
+    if (t >= TO - 1) break;
     const buf = await p.screenshot({ type: "jpeg", quality: 92 });
     if (!ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once("drain", r));
     if (++n % 900 === 0) console.log(`${n}/${frames} images (${Math.round((Date.now() - t0) / 1000)} s)`);
