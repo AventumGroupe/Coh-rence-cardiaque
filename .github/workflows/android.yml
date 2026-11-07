@@ -57,3 +57,4 @@ jobs:
           body: |
             Version de test à installer sur un téléphone Android.
             Sur le téléphone : télécharger le fichier .apk ci-dessous, l'ouvrir, puis autoriser l'installation depuis cette source si Android le demande.
+            Mise à jour : installer simplement le nouveau fichier par-dessus l'ancien, les réglages sont conservés.

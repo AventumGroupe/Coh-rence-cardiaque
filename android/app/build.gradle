@@ -7,8 +7,9 @@ android {
         applicationId "com.softskillsacademie.coherence"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // numéro de version croissant : le numéro de construction GitHub (1 en local)
+        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger() + 10
+        versionName "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,7 +17,20 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Clé de signature FIXE pour les versions de test : chaque nouvel APK s'installe par-dessus le précédent.
+    // (Pour Google Play, on utilisera une autre clé, gardée secrète.)
+    signingConfigs {
+        test {
+            storeFile file("test-signature.keystore")
+            storePassword "coherence-test"
+            keyAlias "coherence-test"
+            keyPassword "coherence-test"
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.test
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
