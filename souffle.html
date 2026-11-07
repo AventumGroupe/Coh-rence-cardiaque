@@ -109,7 +109,12 @@ input[type="range"] { accent-color: var(--accent); width: 100%; }
 .day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .day-head strong { font-family: var(--display); font-weight: 400; font-size: 1.15rem; }
 .day-head span { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
-.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
+.slot small { color: var(--muted); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.slot.rest { justify-content: center; border-style: solid; }
+.week b.plan { color: var(--text); }
+.week b.plan em { background: rgba(242,184,128,.28); }
+.week b.today { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .slot { border: 1px dashed var(--line); border-radius: 12px; padding: 8px 10px; font-size: .8rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .slot i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--muted); flex: none; }
 .slot.done { border-style: solid; border-color: rgba(242,184,128,.5); color: var(--text); }
@@ -221,11 +226,9 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
     <div class="day" aria-live="polite">
       <div class="day-head"><strong>Aujourd'hui</strong><span id="day-count">0 / 3 séances</span></div>
       <div class="slots" id="slots">
-        <div class="slot"><i></i>Matin</div>
-        <div class="slot"><i></i>Midi</div>
-        <div class="slot"><i></i>Soir</div>
+
       </div>
-      <div class="week" id="week" aria-label="Les 7 derniers jours"></div>
+      <div class="week" id="week" aria-label="Cette semaine"></div>
     </div>
 
     <details class="reminders" id="rem">
@@ -302,7 +305,7 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").match
 
 /* ================= Réglages ================= */
 const RYTHMES = [{ n: "Découverte", i: 4, e: 5 }, { n: "Équilibre", i: 5, e: 5 }, { n: "Apaisement", i: 4, e: 6 }];
-const SONS = ["Silence", "Bol chantant", "Musique douce", "Musique et bol"];
+const SONS = ["Silence", "Bols tibétains", "Cithare", "Cithare et bols"];
 const GUIDES = ["Image seule", "Mots à l'écran", "Mots et voix"];
 const S = { scene: "maree", rythme: 1, inh: 5, exh: 5, minutes: 5, son: 3, vol: 60, guide: 1 };
 const store = {
@@ -418,6 +421,7 @@ function renderRem() {
     box.appendChild(b);
     $("rem-note").textContent = REM.native ? "Le téléphone vous prévient aux heures choisies, même quand l'application est fermée." : "Activez les rappels pour recevoir une notification aux heures choisies.";
     store.set("souffle.rappels", REM);
+    renderDay();
     return;
   }
   if (!days.length || !active.length) { box.innerHTML = '<p class="note">Choisissez au moins un jour et un moment.</p>'; }
@@ -438,6 +442,7 @@ function renderRem() {
     }
   }
   store.set("souffle.rappels", REM);
+  renderDay();
 }
 document.querySelectorAll("#rem-days button").forEach(b => b.addEventListener("click", () => {
   const d = +b.dataset.d; REM.days = REM.days.includes(d) ? REM.days.filter(x => x !== d) : [...REM.days, d]; renderRem(); rescheduleSoon();
@@ -446,19 +451,46 @@ MOMENTS.forEach(([k]) => $("s-" + k).addEventListener("input", e => { REM[k] = +
 
 /* ================= Journal 365 ================= */
 const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+// moments prévus un jour donné, d'après les rappels choisis
+function plannedMoments(date) {
+  if (!REM.days.includes(date.getDay())) return [];
+  return MOMENTS.filter(([k, , off]) => REM[k] > off).map(([k, label]) => ({ k, label, min: REM[k] }));
+}
 function renderDay() {
-  const log = store.get("souffle.log", {});
-  const today = log[dayKey(new Date())] || [];
-  const slotsDone = [false, false, false];
-  today.forEach(ts => { const h = new Date(ts).getHours(); const i = h < 11 ? 0 : h < 15 ? 1 : 2; if (!slotsDone[i]) slotsDone[i] = true; else { const j = slotsDone.indexOf(false); if (j >= 0) slotsDone[j] = true; } });
-  [...$("slots").children].forEach((el, i) => el.classList.toggle("done", slotsDone[i]));
-  $("day-count").textContent = `${Math.min(today.length, 3)} / 3 séances${today.length > 3 ? ` (+${today.length - 3})` : ""}`;
-  const names = ["D","L","M","M","J","V","S"];
+  const log = store.get("souffle.log", {}), now = new Date();
+  const today = (log[dayKey(now)] || []).slice().sort();
+  const hasPlan = REM.days.length > 0 && MOMENTS.some(([k, , off]) => REM[k] > off);
+  let slots = plannedMoments(now);
+  const box = $("slots"); box.innerHTML = "";
+  if (!hasPlan) slots = [{ label: "Matin", min: 480 }, { label: "Midi", min: 750 }, { label: "Soir", min: 1140 }];
+  if (hasPlan && !slots.length) {
+    box.innerHTML = '<div class="slot rest">Pas de séance prévue aujourd\'hui</div>';
+    $("day-count").textContent = today.length ? `${today.length} séance${today.length > 1 ? "s" : ""} en bonus` : "Jour de repos";
+  } else {
+    // chaque séance faite est rattachée au moment prévu le plus proche
+    const done = slots.map(() => false);
+    today.forEach(ts => {
+      const d = new Date(ts), m = d.getHours() * 60 + d.getMinutes();
+      let best = -1; slots.forEach((sl, i) => { if (!done[i] && (best < 0 || Math.abs(sl.min - m) < Math.abs(slots[best].min - m))) best = i; });
+      if (best >= 0) done[best] = true;
+    });
+    slots.forEach((sl, i) => {
+      const el = document.createElement("div"); el.className = "slot" + (done[i] ? " done" : "");
+      el.innerHTML = `<i></i><span>${sl.label}${hasPlan ? ` <small>${hhmm(sl.min)}</small>` : ""}</span>`; box.appendChild(el);
+    });
+    const n = done.filter(Boolean).length, extra = Math.max(0, today.length - slots.length);
+    $("day-count").textContent = `${n} / ${slots.length} séance${slots.length > 1 ? "s" : ""}${extra ? ` (+${extra})` : ""}`;
+  }
+  // la semaine en cours, du lundi au dimanche : jours prévus soulignés, remplissage = séances faites
+  const names = ["D", "L", "M", "M", "J", "V", "S"], monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
   let html = "";
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const n = (log[dayKey(d)] || []).length;
-    html += `<b title="${d.toLocaleDateString("fr-FR")} : ${n} séance(s)"><em style="--f:${Math.min(n,3)/3*100}%"></em>${names[d.getDay()]}</b>`;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const p = hasPlan ? plannedMoments(d).length : 3, n = (log[dayKey(d)] || []).length;
+    const f = p ? Math.min(n, p) / p : (n ? 1 : 0);
+    const cls = [p && hasPlan ? "plan" : "", dayKey(d) === dayKey(now) ? "today" : ""].join(" ").trim();
+    html += `<b class="${cls}" title="${d.toLocaleDateString("fr-FR", { weekday: "long" })} : ${n} séance(s)${hasPlan ? `, ${p} prévue(s)` : ""}"><em style="--f:${f * 100}%"></em>${names[d.getDay()]}</b>`;
   }
   $("week").innerHTML = html;
 }
@@ -470,14 +502,14 @@ function logSession() {
 }
 
 /* ================= Son =================
-   Volontairement simple et propre : uniquement des sons purs (sinusoïdes), aucun bruit synthétique.
-   - Musique douce : un accord tenu de ré qui enfle à l'inspiration et se pose à l'expiration,
-     avec de rares notes de bol, dans un écho léger.
-   - Bol chantant : un bol au début de chaque inspiration, plus doux à l'expiration.
-   Le moteur audio travaille avec une grande mémoire tampon (latencyHint "playback") pour ne pas
-   être perturbé par l'animation. */
+   Très épuré, aucun son tenu en continu :
+   - Bols tibétains : un bol grave au début de l'inspiration, un bol aigu au début de l'expiration
+     (deux signaux par cycle de 10 s).
+   - Cithare : quelques notes pincées, très douces et espacées, sur une gamme pentatonique.
+   Le moteur audio travaille avec une grande mémoire tampon (latencyHint "playback"). */
 let AC = null, A = null;
-const NOTES = [587.33, 698.46, 783.99, 880.0, 1046.5, 1174.66]; // ré, fa, sol, la, do, ré (pentatonique, registre audible sur un téléphone)
+const CITHARE = [293.66, 329.63, 369.99, 440.0, 493.88, 587.33]; // ré, mi, fa#, la, si, ré
+let pluckIdx = 2;
 function glide(param, value, tc) {
   const t = AC.currentTime;
   if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(t); else { const v = param.value; param.cancelScheduledValues(t); param.setValueAtTime(v, t); }
@@ -505,66 +537,55 @@ function audioInit() {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   try { AC = new Ctx({ latencyHint: "playback" }); } catch (e) { try { AC = new Ctx(); } catch (e2) { AC = null; return; } }
   const master = AC.createGain(); master.gain.value = 0; master.connect(AC.destination);
-  // écho doux, gauche / droite
-  const send = AC.createGain(); send.gain.value = 0.28;
+  // petit écho gauche / droite, pour l'espace
+  const send = AC.createGain(); send.gain.value = 0.2;
   const merger = AC.createChannelMerger(2); merger.connect(master);
-  [[0.41, 0], [0.57, 1]].forEach(([d, ch]) => {
+  [[0.43, 0], [0.61, 1]].forEach(([d, ch]) => {
     const dl = AC.createDelay(1), fb = AC.createGain(), lp = AC.createBiquadFilter();
-    dl.delayTime.value = d; fb.gain.value = 0.32; lp.type = "lowpass"; lp.frequency.value = 1800;
+    dl.delayTime.value = d; fb.gain.value = 0.28; lp.type = "lowpass"; lp.frequency.value = 1600;
     send.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(merger, 0, ch);
   });
-  // accord tenu : ré, la, ré (deux voix très légèrement désaccordées pour un battement lent)
-  const drone = AC.createGain(); drone.gain.value = 0; drone.connect(master);
-  // voix médiums (ré, la, ré) : les petits haut-parleurs ne restituent presque rien sous 300 Hz
-  const warm = AC.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 1400; warm.connect(drone);
-  [[146.83, 0.10, "sine"], [293.66, 0.45, "triangle"], [294.1, 0.30, "sine"], [440.0, 0.32, "triangle"], [587.33, 0.16, "sine"]].forEach(([f, g, type], i) => {
-    const o = AC.createOscillator(), og = AC.createGain(); o.type = type; o.frequency.value = f; og.gain.value = g;
-    const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.07 + i * 0.031; lg.gain.value = g * 0.3;
-    lfo.connect(lg); lg.connect(og.gain); lfo.start();
-    o.connect(og); og.connect(warm); o.start();
-  });
-  drone.connect(send);
-  const notes = AC.createGain(); notes.gain.value = 1; notes.connect(master); notes.connect(send);
-  A = { master, drone, notes };
+  // bus des sons : un filtre doux retire les aigus agressifs
+  const soft = AC.createBiquadFilter(); soft.type = "lowpass"; soft.frequency.value = 3200; soft.Q.value = 0.5;
+  soft.connect(master); soft.connect(send);
+  A = { master, notes: soft };
 }
 function audioLevel() {
   if (!AC || !A) return;
   const on = S.son !== 0 && (mode === "run" || mode === "intro") && !paused;
   glide(A.master.gain, on ? 1.5 * S.vol / 100 : 0, on ? 0.6 : 0.4);
-  if (!wantsMusic()) glide(A.drone.gain, 0, 0.5);
 }
-function audioStart() { if (!AC) return; audioAlive(); audioLevel(); if (wantsMusic()) glide(A.drone.gain, 0.07, 1.5); }
+function audioStart() { if (!AC) return; audioAlive(); audioLevel(); }
 function audioStop() { if (AC && A) glide(A.master.gain, 0, 0.8); }
-function tone(f, vol, when, decay, partial) {
-  const t = Math.max(when || 0, AC.currentTime);
-  [[1, 1], [2, partial || 0.12]].forEach(([m, a]) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = "sine"; o.frequency.value = f * m;
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * a, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + decay / m);
-    o.connect(g); g.connect(A.notes); o.start(t); o.stop(t + decay / m + 0.05);
+function partial(f, peak, attack, decay, when) {
+  const t = Math.max(when || 0, AC.currentTime), o = AC.createOscillator(), g = AC.createGain();
+  o.type = "sine"; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  o.connect(g); g.connect(A.notes); o.start(t); o.stop(t + decay + 0.05);
+}
+// bol tibétain : partiels inharmoniques, frappe feutrée, longue résonance, léger battement naturel
+function singingBowl(f, vol, when) {
+  [[1, 1, 9], [2.71, 0.4, 6], [5.33, 0.16, 3.5], [8.8, 0.05, 2]].forEach(([m, a, d], i) => {
+    partial(f * m, vol * a * 0.6, 0.012, d, when);
+    if (i < 2) partial(f * m + (i ? 1.1 : 0.4), vol * a * 0.3, 0.012, d * 0.9, when);
   });
 }
-function singingBowl(f, vol) {
-  const t = AC.currentTime;
-  [[1, 1, 7], [2.76, 0.22, 4]].forEach(([m, a, d]) => [0, 0.6].forEach(beat => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = "sine"; o.frequency.value = f * m + beat;
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * a * 0.5, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-    o.connect(g); g.connect(A.notes); o.start(t); o.stop(t + d + 0.05);
-  }));
+// cithare : corde pincée très douce (harmoniques qui s'éteignent vite, fondamentale qui reste)
+function cithare(f, vol, when) {
+  [[1, 1, 3.6], [2, 0.32, 2.0], [3, 0.12, 1.2], [4, 0.05, 0.8]].forEach(([m, a, d]) => partial(f * m, vol * a, 0.006, d, when));
 }
-// début de phase : l'accord enfle à l'inspiration, se pose à l'expiration ; une note de temps en temps
+// début de phase : bol grave à l'inspiration, bol aigu à l'expiration ; quelques notes de cithare entre les deux
 function audioPhase(inhale, dur) {
   if (!AC || !A) return;
   audioAlive();
+  const t = AC.currentTime;
+  if (wantsBowl()) singingBowl(inhale ? 220 : 440, inhale ? 0.34 : 0.2, t);
   if (wantsMusic()) {
-    glide(A.drone.gain, inhale ? 0.12 : 0.055, dur / 2.5);
-    const pool = inhale ? NOTES.slice(2) : NOTES.slice(0, 4);
-    tone(pool[Math.floor(Math.random() * pool.length)], 0.08, AC.currentTime + 0.3, 5, 0.2);
-    if (Math.random() < 0.4) tone(pool[Math.floor(Math.random() * pool.length)], 0.045, AC.currentTime + dur * 0.55, 4, 0.2);
+    // la mélodie monte doucement pendant l'inspiration et redescend pendant l'expiration
+    const step = () => { pluckIdx = Math.max(0, Math.min(CITHARE.length - 1, pluckIdx + (inhale ? 1 : -1) * (Math.random() < 0.7 ? 1 : 0))); return CITHARE[pluckIdx]; };
+    cithare(step(), 0.07, t + dur * 0.32);
+    if (Math.random() < 0.55) cithare(step(), 0.05, t + dur * 0.68);
   }
-  // signal net à chaque changement : bol aigu (la) à l'inspiration, plus grave (mi) à l'expiration
-  if (wantsBowl()) singingBowl(inhale ? 440 : 329.63, inhale ? 0.32 : 0.28);
 }
 function say(text) {
   if (S.guide !== 2 || !("speechSynthesis" in window)) return;
@@ -880,7 +901,7 @@ function stopSession(completed) {
     $("end-title").textContent = n >= 3 ? "Journée 365 accomplie" : "Séance terminée";
     $("end-text").textContent = `${cycles} respirations, ${S.minutes} minutes. ${n >= 3 ? "Trois séances aujourd'hui, bravo." : `Séance ${n} sur 3 aujourd'hui.`}`;
     document.querySelectorAll("#feel .chip").forEach(c => c.setAttribute("aria-pressed", "false"));
-    show($("end"), true); if (AC && wantsBowl()) { glide(A.master.gain, 1.5 * S.vol / 100, 0.2); singingBowl(392, 0.25); setTimeout(audioStop, 6000); } say("Séance terminée. Revenez doucement.");
+    show($("end"), true); if (AC && S.son !== 0) { glide(A.master.gain, 1.5 * S.vol / 100, 0.2); singingBowl(220, 0.3); singingBowl(440, 0.12, AC.currentTime + 1.2); setTimeout(audioStop, 8000); } say("Séance terminée. Revenez doucement.");
   } else { mode = "home"; show($("home"), true); }
 }
 function setPauseIcon() {
