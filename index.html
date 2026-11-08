@@ -328,7 +328,7 @@ const wantsMusic = () => S.son === 2 || S.son === 3;
 const wantsBowl = () => S.son === 1 || S.son === 3;
 
 const SUBS = {
-  maree: ["la marée descend", "la marée monte"],
+  maree: ["la marée monte", "la marée descend"],
   aube: ["le soleil se lève", "le soleil se couche"],
   lotus: ["le lotus s'ouvre", "le lotus se referme"],
   aurore: ["l'aurore s'élève", "l'aurore s'apaise"],
@@ -629,10 +629,15 @@ function buildSeeds() {
   const pines = [];
   for (let x = -10; x < W + 10; x += 7 + r() * 9) pines.push({ x, h: H * (0.04 + r() * 0.07), w: 6 + r() * 6 });
   const motes = Array.from({ length: 46 }, () => ({ x: r(), y: r(), s: 0.6 + r() * 1.8, sp: 0.2 + r() * 0.6, p: r() * 6.28 }));
+  const clouds = Array.from({ length: 5 }, () => ({ x: r(), y: 0.15 + r() * 0.55, w: 0.08 + r() * 0.1, sp: 0.4 + r() }));
+  const mHy = H * 0.3;
+  const dune1 = ridge(r, 6, mHy + H * 0.005, H * 0.05, 1), dune2 = ridge(r, 5, mHy + H * 0.05, H * 0.045, 1.4);
+  const tufts = Array.from({ length: Math.round(W / 22) }, () => { const x = r() * W; const i = Math.max(0, Math.min(dune2.length - 1, Math.round((x + 5) / 5))); return { x, y: dune2[i][1] + 3, h: H * (0.015 + r() * 0.02), p: r() * 6.28 }; });
+  const glints = Array.from({ length: 70 }, () => ({ x: r(), y: r(), sp: 0.3 + r(), p: r() * 6.28 }));
   const bokeh = Array.from({ length: 14 }, () => ({ x: r(), y: r() * 0.7, r: 0.03 + r() * 0.07, sp: 0.3 + r(), p: r() * 6.28 }));
   const grass = Array.from({ length: Math.round(W / 6) }, () => ({ x: r(), h: 0.08 + r() * 0.22, w: 1 + r() * 2.2, p: r() * 6.28, c: ["#5f8c46", "#77a052", "#4a7339", "#93b25e"][Math.floor(r() * 4)] }));
   const pads = [{ x: 0.2, y: 0.83, r: 0.09 }, { x: 0.8, y: 0.78, r: 0.07 }, { x: 0.66, y: 0.92, r: 0.11 }, { x: 0.33, y: 0.95, r: 0.06 }];
-  seedData = { bokeh, grass, stars, aube, aubeHy, aurM, aurHy, pines, motes, pads };
+  seedData = { clouds, dune1, dune2, tufts, glints, bokeh, grass, stars, aube, aubeHy, aurM, aurHy, pines, motes, pads };
 }
 
 const hex = (h) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
@@ -649,45 +654,60 @@ function drawStars(alpha, t) {
 
 /* ---------- Marée ---------- */
 function drawMaree(b, t) {
-  // la marée descend à l'inspiration et remonte à l'expiration
-  b = 1 - b;
-  const hy = H * 0.40;
-  ctx.fillStyle = vGrad(0, hy, [[0, "#1f3658"], [0.55, "#7a6b92"], [0.88, "#e9a58d"], [1, "#f8c793"]]); ctx.fillRect(0, 0, W, hy + 1);
-  const sx = W * 0.5, sr = Math.min(W, H) * 0.055, sy = hy - sr * 0.55;
-  let g = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr * 7); g.addColorStop(0, "rgba(255,226,170,.55)"); g.addColorStop(1, "rgba(255,226,170,0)");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy);
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, hy); ctx.clip();
-  ctx.fillStyle = "#fff1d2"; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 7); ctx.fill(); ctx.restore();
-  // sable
-  ctx.fillStyle = vGrad(hy, H, [[0, "#c9a882"], [1, "#e4c79e"]]); ctx.fillRect(0, hy, W, H - hy);
-  const edge = (x, k) => lerp(H * 0.60, H * 0.88, k) + Math.sin(x * 0.011 + t * 0.0005) * H * 0.012 + Math.sin(x * 0.027 - t * 0.0008) * H * 0.006;
-  // sable mouillé laissé par la vague
-  const pts = []; for (let x = -10; x <= W + 10; x += 8) pts.push([x, edge(x, Math.min(1, b + 0.12))]);
-  ctx.globalAlpha = 0.35 + 0.25 * (1 - b); ctx.fillStyle = "#a88563";
-  ctx.beginPath(); ctx.moveTo(-10, hy); pts.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(W + 10, hy); ctx.fill(); ctx.globalAlpha = 1;
-  // mer
-  const ep = []; for (let x = -10; x <= W + 10; x += 6) ep.push([x, edge(x, b)]);
-  const maxY = H * 0.9;
-  ctx.fillStyle = vGrad(hy, maxY, [[0, "#3a5878"], [0.45, "#3f7d93"], [1, "#6fb3b5"]]);
-  ctx.beginPath(); ctx.moveTo(-10, hy); ep.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(W + 10, hy); ctx.fill();
-  // reflet du soleil
-  ctx.save(); ctx.beginPath(); ctx.moveTo(-10, hy); ep.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(W + 10, hy); ctx.clip();
-  for (let y = hy + 2; y < maxY; y += 5) {
-    const k = (y - hy) / (maxY - hy), wdt = sr * (0.6 + k * 3.2) * (0.6 + 0.4 * Math.sin(y * 0.3 + t * 0.002));
-    ctx.globalAlpha = 0.5 * (1 - k) ; ctx.fillStyle = "#ffe0ae";
-    ctx.fillRect(sx - wdt / 2 + Math.sin(y * 0.11 + t * 0.001) * 6, y, wdt, 1.6);
-  }
-  ctx.globalAlpha = 0.18; ctx.strokeStyle = "#e9f6f2"; ctx.lineWidth = 1;
+  // vue depuis la mer vers la plage : la marée monte (vers le haut de l'image) à l'inspiration, redescend à l'expiration
+  const hy = H * 0.3, m = Math.min(W, H), sd = seedData;
+  // ciel du matin
+  ctx.fillStyle = vGrad(0, hy + 2, [[0, "#5f8fbd"], [0.55, "#a9c1d6"], [1, "#f1d6b8"]]); ctx.fillRect(0, 0, W, hy + 2);
+  let g = ctx.createRadialGradient(W * 0.8, H * 0.05, 0, W * 0.8, H * 0.05, Math.max(W, H) * 0.45);
+  g.addColorStop(0, "rgba(255,240,210,.75)"); g.addColorStop(1, "rgba(255,240,210,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy);
+  ctx.fillStyle = "rgba(255,255,255,.35)";
+  sd.clouds.forEach(c => { const x = ((c.x * W + t * 0.004 * c.sp) % (W + 300)) - 150, y = c.y * hy;
+    ctx.beginPath(); ctx.ellipse(x, y, c.w * m, c.w * m * 0.22, 0, 0, 7); ctx.ellipse(x + c.w * m * 0.4, y - c.w * m * 0.08, c.w * m * 0.5, c.w * m * 0.18, 0, 0, 7); ctx.fill(); });
+  // dunes et herbes
+  ctx.fillStyle = "#9aa985"; poly(sd.dune1, hy + H * 0.08); ctx.fill();
+  ctx.fillStyle = "#c9bf98"; poly(sd.dune2, hy + H * 0.1); ctx.fill();
+  ctx.strokeStyle = "#6f8455"; ctx.lineCap = "round";
+  sd.tufts.forEach(tf => { const base = tf.y; for (let k = -2; k <= 2; k++) {
+    const sway = Math.sin(t * 0.0008 + tf.p + k) * 2;
+    ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(tf.x + k * 2, base); ctx.quadraticCurveTo(tf.x + k * 3 + sway, base - tf.h * 0.6, tf.x + k * 5 + sway * 2, base - tf.h); ctx.stroke(); } });
+  // plage
+  const beachTop = hy + H * 0.05;
+  ctx.fillStyle = vGrad(beachTop, H, [[0, "#ecdcbc"], [0.5, "#e2c79c"], [1, "#d6b585"]]); ctx.fillRect(0, beachTop, W, H - beachTop);
+  // bord de l'eau : plus la marée est haute, plus il remonte vers les dunes
+  const depth = (y) => Math.max(0.15, (y - hy) / (H - hy));
+  const edge = (x, k) => { const y0 = lerp(H * 0.76, H * 0.47, k), s = depth(y0);
+    return y0 + Math.sin(x * 0.009 + t * 0.0005) * H * 0.014 * s + Math.sin(x * 0.023 - t * 0.0008) * H * 0.006 * s; };
+  const pts = (k) => { const a = []; for (let x = -10; x <= W + 10; x += 6) a.push([x, edge(x, k)]); return a; };
+  // sable mouillé laissé quand la marée redescend
+  const wet = pts(Math.min(1, b + 0.13));
+  ctx.globalAlpha = 0.25 + 0.3 * (1 - b); ctx.fillStyle = "#b99a72";
+  ctx.beginPath(); ctx.moveTo(-10, H); wet.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(W + 10, H); ctx.fill(); ctx.globalAlpha = 1;
+  // la mer, au premier plan
+  const ep = pts(b);
+  ctx.save(); ctx.beginPath(); ctx.moveTo(-10, H + 5); ep.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(W + 10, H + 5); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = vGrad(H * 0.45, H, [[0, "#86d3c9"], [0.25, "#4fa7b0"], [0.65, "#2c7d93"], [1, "#1d5c76"]]); ctx.fillRect(0, H * 0.4, W, H * 0.6);
+  // eau peu profonde près du bord : on devine le sable
+  { const e0 = edge(W / 2, b), band = H * 0.08 * depth(e0);
+    const gg = ctx.createLinearGradient(0, e0 - H * 0.02, 0, e0 + band); gg.addColorStop(0, "rgba(236,214,170,.6)"); gg.addColorStop(1, "rgba(236,214,170,0)");
+    ctx.fillStyle = gg; ctx.fillRect(0, e0 - H * 0.04, W, band + H * 0.06); }
+  // vagues qui avancent vers la plage (plus grandes au premier plan)
+  const eMid = edge(W / 2, b);
   for (let i = 0; i < 9; i++) {
-    const y = hy + (maxY - hy) * ((i / 9 + t * 0.00002) % 1);
-    ctx.beginPath(); for (let x = 0; x <= W; x += 20) ctx.lineTo(x, y + Math.sin(x * 0.02 + i + t * 0.001) * 2); ctx.stroke();
+    const k = ((i / 9) + t * 0.000045) % 1, y = H - (H - eMid) * Math.pow(k, 0.8), s = depth(y);
+    ctx.globalAlpha = 0.28 * (1 - k * 0.6); ctx.strokeStyle = "#e8fbf7"; ctx.lineWidth = 1 + 2.4 * s;
+    ctx.beginPath(); for (let x = -20; x <= W + 20; x += 16) { const yy = y + Math.sin(x * 0.012 / s + i * 1.7 + t * 0.0006) * 5 * s; x < 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); } ctx.stroke();
   }
+  // reflets du soleil
+  ctx.fillStyle = "#fffaf0";
+  sd.glints.forEach(gl => { const y = lerp(eMid, H, gl.y), a = Math.pow(Math.sin(t * 0.002 * gl.sp + gl.p), 8);
+    ctx.globalAlpha = a * 0.8; ctx.fillRect(gl.x * W, y, 2 + 3 * depth(y), 1.5); });
   ctx.restore(); ctx.globalAlpha = 1;
-  // écume
+  // écume sur le bord de la vague
   ctx.lineJoin = "round";
-  [[0, 0.95, 3.2], [-H * 0.012, 0.45, 2], [-H * 0.028, 0.2, 1.5]].forEach(([dy, a, lw]) => {
-    ctx.globalAlpha = a * (0.6 + 0.4 * b); ctx.strokeStyle = "#fbfaf4"; ctx.lineWidth = lw;
-    ctx.beginPath(); ep.forEach((p, i) => { const y = p[1] + dy + Math.sin(p[0] * 0.08 + t * 0.003 + dy) * 1.5; i ? ctx.lineTo(p[0], y) : ctx.moveTo(p[0], y); }); ctx.stroke();
+  [[0, 0.95, 3], [H * 0.012, 0.5, 2], [H * 0.026, 0.25, 1.5]].forEach(([dy, a, lw]) => {
+    ctx.globalAlpha = a * (0.65 + 0.35 * b); ctx.strokeStyle = "#ffffff";
+    ctx.beginPath(); ep.forEach((p, i) => { const s = depth(p[1]); const y = p[1] + dy * s + Math.sin(p[0] * 0.07 + t * 0.003 + dy) * 1.5 * s;
+      ctx.lineWidth = lw * (0.6 + s); i ? ctx.lineTo(p[0], y) : ctx.moveTo(p[0], y); }); ctx.stroke();
   });
   ctx.globalAlpha = 1;
 }

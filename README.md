@@ -7,7 +7,7 @@ Au lieu de la classique boule qui monte et descend, ce sont des **paysages vivan
 
 | Paysage | Inspiration | Expiration |
 |---|---|---|
-| Marée | la marée descend et découvre le sable | la marée monte : l'eau regagne la plage |
+| Marée (vue depuis la mer) | la marée monte vers les dunes | la marée redescend et laisse le sable mouillé |
 | Aube | le soleil se lève, le ciel s'éclaire | il redescend, les étoiles reviennent |
 | Lotus | la fleur s'ouvre, des lucioles s'élèvent | elle se referme doucement |
 | Aurore | l'aurore boréale s'élève et s'intensifie | elle s'apaise au-dessus du lac |
