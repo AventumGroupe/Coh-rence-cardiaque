@@ -56,6 +56,17 @@ canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 .brand p { margin: 0; color: var(--muted); font-size: .88rem; }
 .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin: 0 0 8px; }
 
+.pills { display: flex; justify-content: space-between; gap: 4px; }
+.pill { display: grid; justify-items: center; gap: 3px; font-weight: 500; font-size: .85rem; color: var(--muted); flex: 1; }
+.pill span { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); }
+.pill.plan span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pill.today span { box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--text); }
+.pill.done span::after { content: "✓"; font-size: .7rem; margin-left: 1px; }
+.pill i { font-style: normal; font-size: .62rem; letter-spacing: 1px; color: var(--accent); min-height: .9em; line-height: 1; }
+.prog-times { margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .88rem; color: var(--muted); }
+.prog-times b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.today-head { padding-top: 4px; }
+.today-head span:first-child { font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
 .choices { display: grid; gap: 10px; }
 .choice { appearance: none; display: flex; gap: 14px; align-items: center; text-align: left; width: 100%; cursor: pointer;
   padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(244,236,222,.05); color: var(--text); font: inherit; }
@@ -175,6 +186,7 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 .cal-link { appearance: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(244,236,222,.05); color: var(--text); font: inherit; font-size: .88rem; text-decoration: none; cursor: pointer; text-align: left; }
 .cal-link span:last-child { color: var(--accent); font-size: .82rem; }
 .cal-link:hover { background: rgba(244,236,222,.1); }
+.safety { text-align: center; font-size: .76rem; opacity: .8; }
 .start-hint { text-align: center; margin-top: -6px !important; }
 .version { text-align: center; opacity: .6; }
 .note { margin: 0; color: var(--muted); font-size: .8rem; }
@@ -299,14 +311,15 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
         Commencer
       </button>
       <p class="note start-hint" id="start-hint"></p>
+      <p class="note safety">Respirez par le nez, calmement, sans gonfler les poumons au maximum. Si la tête tourne, reprenez une respiration naturelle.</p>
     </div>
 
     <div class="day" aria-live="polite">
-      <div class="day-head"><strong>Aujourd'hui</strong><span id="day-count">0 / 3 séances</span></div>
-      <div class="slots" id="slots">
-
-      </div>
-      <div class="week" id="week" aria-label="Cette semaine"></div>
+      <div class="day-head"><strong>Mon programme</strong><button class="back" id="edit-prog">Modifier ›</button></div>
+      <div class="pills" id="week" aria-label="Jours du programme, semaine en cours"></div>
+      <p class="prog-times" id="prog-times"></p>
+      <div class="day-head today-head"><span>Aujourd'hui</span><span id="day-count"></span></div>
+      <div class="slots" id="slots"></div>
     </div>
 
     <details class="reminders" id="rem">
@@ -448,6 +461,7 @@ function syncUI() {
 }
 $("c-perso").addEventListener("click", () => { S.method = "perso"; showStep("setup"); });
 $("c-std").addEventListener("click", () => { S.method = "std"; showStep("setup"); });
+$("edit-prog").addEventListener("click", () => { const r = $("rem"); r.open = true; r.scrollIntoView({ behavior: "smooth", block: "start" }); });
 $("back-choice").addEventListener("click", () => showStep("choice"));
 document.querySelectorAll("#f-rythme .card").forEach(c => c.addEventListener("click", () => { S.rythme = +c.dataset.r; syncUI(); }));
 document.querySelectorAll("#seg-duree button").forEach(c => c.addEventListener("click", () => { S.minPerso = +c.dataset.m; syncUI(); }));
@@ -593,18 +607,22 @@ function renderDay() {
     const n = done.filter(Boolean).length, extra = Math.max(0, today.length - slots.length);
     $("day-count").textContent = `${n} / ${slots.length} séance${slots.length > 1 ? "s" : ""}${extra ? ` (+${extra})` : ""}`;
   }
-  // la semaine en cours, du lundi au dimanche : jours prévus soulignés, remplissage = séances faites
-  const names = ["D", "L", "M", "M", "J", "V", "S"], monday = new Date(now);
+  // la semaine en cours, du lundi au dimanche : jours du programme en pastilles pleines, points = séances (pleins = faites)
+  const names = ["D", "L", "M", "M", "J", "V", "S"], full = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], monday = new Date(now);
   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
   let html = "";
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday); d.setDate(monday.getDate() + i);
-    const p = hasPlan ? plannedMoments(d).length : 3, n = (log[dayKey(d)] || []).length;
-    const f = p ? Math.min(n, p) / p : (n ? 1 : 0);
-    const cls = [p && hasPlan ? "plan" : "", dayKey(d) === dayKey(now) ? "today" : ""].join(" ").trim();
-    html += `<b class="${cls}" title="${d.toLocaleDateString("fr-FR", { weekday: "long" })} : ${n} séance(s)${hasPlan ? `, ${p} prévue(s)` : ""}"><em style="--f:${f * 100}%"></em>${names[d.getDay()]}</b>`;
+    const p = hasPlan ? plannedMoments(d).length : 0, n = (log[dayKey(d)] || []).length;
+    const cls = ["pill", p ? "plan" : "", dayKey(d) === dayKey(now) ? "today" : "", p && n >= p ? "done" : ""].join(" ").replace(/\s+/g, " ").trim();
+    const dots = p ? Array.from({ length: p }, (_, k) => k < n ? "●" : "○").join("") : (n ? "●".repeat(Math.min(n, 3)) : "");
+    html += `<b class="${cls}" title="${full[d.getDay()]} : ${p ? p + " séance(s) prévue(s), " : "pas de séance prévue, "}${n} faite(s)"><span>${names[d.getDay()]}</span><i>${dots}</i></b>`;
   }
   $("week").innerHTML = html;
+  const act = MOMENTS.filter(([k, , off]) => REM[k] > off);
+  $("prog-times").innerHTML = hasPlan
+    ? act.map(([k, label]) => `<span>${label} <b>${hhmm(REM[k])}</b></span>`).join("")
+    : "<span>Aucun programme. Touchez « Modifier » pour choisir vos jours et vos heures.</span>";
 }
 function logSession() {
   const log = store.get("souffle.log", {});
@@ -1005,10 +1023,10 @@ function breathAt(ms) {
 /* Démarrage adapté : la séance commence au rythme naturel mesuré, puis ralentit progressivement
    (environ 1 min 30) jusqu'au rythme choisi, en gardant la même proportion inspiration / expiration. */
 let SCHED = null, schedI = 0;
-function buildSchedule(naturalSec) {
+function buildSchedule(naturalSec, rampMs) {
   const T = (S.inh + S.exh) * 1000, rI = S.inh / (S.inh + S.exh), total = S.minutes * 60000;
   const P = naturalSec && naturalSec * 1000 < T - 300 ? naturalSec * 1000 : T;
-  const N = P < T ? Math.max(4, Math.round(90000 / ((P + T) / 2))) : 0;
+  const N = P < T ? Math.max(3, Math.round((rampMs || 90000) / ((P + T) / 2))) : 0;
   const cyc = []; let t = 0;
   for (let k = 0; k < 1000; k++) {
     const d = k < N ? P + (T - P) * ease((k + 0.5) / N) : T;
@@ -1040,7 +1058,9 @@ function finishCalib(useTaps) {
     S.natural = Math.round(60 / period); store.set("souffle.reglages", S);
   }
   $("tap").hidden = true; $("calib-skip").hidden = true;
-  buildSchedule(period); totalMs = SCHED.total;
+  // sans mesure (bouton « Passer »), on garde la mise en route douce de la méthode standard
+  if (period) buildSchedule(period); else buildSchedule(7.5, 45000);
+  totalMs = SCHED.total;
   mode = "intro";
   const target = 60 / (S.inh + S.exh);
   if (period && SCHED.ramp) {
@@ -1076,12 +1096,13 @@ function show(el, on) { el.classList.toggle("fade-out", !on); el.setAttribute("a
 
 function start() {
   applyMethod();
-  buildSchedule(null); totalMs = SCHED.total;
+  // méthode standard : mise en route douce, de 8 respirations/min au rythme choisi en 45 s environ (évite l'hyperventilation)
+  buildSchedule(7.5, 45000); totalMs = SCHED.total;
   runMs = 0; introMs = 0; paused = false; lastPhase = null; mode = "intro"; lastSwitchMin = 0; setScene(S.scene);
   audioInit(); audioStart();
   show($("home"), false); show($("hud"), true); show($("end"), false);
   $("paused").hidden = true; setPauseIcon();
-  $("word").textContent = "Installez-vous"; $("word").style.opacity = 1; $("count").textContent = "le dos droit, les épaules relâchées";
+  $("word").textContent = "Installez-vous"; $("word").style.opacity = 1; $("count").textContent = "le dos droit · par le nez, sans forcer";
   $("cue").style.visibility = "visible";
   say("Installez-vous confortablement.");
   keepAwake();
@@ -1147,7 +1168,10 @@ function frame(now) {
     $("time").textContent = fmtClock(totalMs);
   } else {
     if (!paused) runMs += dt;
-    const st = sessionBreath(runMs); b = st.b;
+    const st = sessionBreath(runMs);
+    // première minute : l'image ne s'ouvre qu'en partie, pour inviter à un souffle léger (pas de grandes inspirations)
+    const amp = runMs < 60000 ? 0.5 + 0.5 * ease(runMs / 60000) : 1;
+    b = st.b * amp;
     if (!paused) {
       const ph = st.inhale ? "in" : "out";
       if (ph !== lastPhase) {
@@ -1160,7 +1184,7 @@ function frame(now) {
         audioPhase(st.inhale, dur); vibe(st.inhale);
         say(st.inhale ? "Inspirez" : "Expirez");
         $("word").textContent = st.inhale ? "Inspirez" : "Expirez";
-        $("count").dataset.sub = (SUBS[curScene] || ["", ""])[st.inhale ? 0 : 1] + (st.ramp ? " · on ralentit peu à peu" : "");
+        $("count").dataset.sub = (SUBS[curScene] || ["", ""])[st.inhale ? 0 : 1] + (st.ramp ? " · on ralentit peu à peu" : runMs < 60000 ? " · sans forcer" : "");
       }
       const left = Math.ceil(st.left);
       $("count").textContent = $("count").dataset.sub + "  " + "·".repeat(Math.max(1, left));
