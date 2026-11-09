@@ -138,6 +138,8 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 .cal-link { appearance: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(244,236,222,.05); color: var(--text); font: inherit; font-size: .88rem; text-decoration: none; cursor: pointer; text-align: left; }
 .cal-link span:last-child { color: var(--accent); font-size: .82rem; }
 .cal-link:hover { background: rgba(244,236,222,.1); }
+.start-hint { text-align: center; margin-top: -6px !important; }
+.version { text-align: center; opacity: .6; }
 .note { margin: 0; color: var(--muted); font-size: .8rem; }
 
 /* ---------- Séance ---------- */
@@ -201,6 +203,7 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
       Commencer
     </button>
+    <p class="note start-hint" id="start-hint"></p>
 
     <div class="sliders">
       <div class="sl">
@@ -261,6 +264,7 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
         <p class="note" id="rem-note">Chaque rappel s'ajoute à votre agenda comme un rendez-vous de 5 minutes qui se répète : c'est votre téléphone qui vous prévient.</p>
       </div>
     </details>
+    <p class="note version" id="app-version"></p>
 
 
   </section>
@@ -346,6 +350,7 @@ function syncUI() {
   $("v-son").textContent = SONS[S.son];
   $("v-vol").textContent = S.son === 0 ? "—" : `${S.vol} %`;
   $("v-guide").textContent = GUIDES[S.guide];
+  $("start-hint").textContent = S.depart ? "Vous commencerez par toucher l'écran à chaque inspiration (6 fois) : la séance partira de votre rythme." : "La séance démarre directement au rythme choisi.";
   $("v-depart").textContent = S.depart ? `À mon rythme, puis on ralentit${S.natural ? ` (dernier : ${S.natural}/min)` : ""}` : "Directement au rythme choisi";
   $("s-vol").disabled = S.son === 0;
   document.querySelectorAll(".sl input").forEach(paintRange);
@@ -1089,6 +1094,8 @@ const hot = window.claude && window.claude.hot;
 if (hot && hot.snapshot) hot.snapshot(() => ({ S }));
 
 window.addEventListener("resize", () => { resize(); aurGrads = new Map(); });
+const APP_VERSION = "__APP_VERSION__";
+$("app-version").textContent = "Version " + (APP_VERSION.startsWith("__") ? "web" : APP_VERSION);
 resize(); syncUI(); renderDay(); renderRem();
 requestAnimationFrame((n) => { lastFrame = n; frame(n); });
 })();
