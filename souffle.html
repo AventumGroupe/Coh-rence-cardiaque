@@ -164,6 +164,8 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 .cue .count { font-size: 1rem; color: var(--text); opacity: .85; font-variant-numeric: tabular-nums; letter-spacing: .08em; font-style: italic; }
 .progress { position: absolute; left: 0; right: 0; bottom: 0; height: calc(3px + env(safe-area-inset-bottom, 0px)); }
 .progress div { height: 3px; width: 0%; background: var(--accent); opacity: .8; }
+.tap { position: absolute; inset: 0; pointer-events: auto; cursor: pointer; }
+.cue .skip { pointer-events: auto; margin-top: 10px; background: rgba(13,20,34,.35); }
 .paused-note { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 1.6rem; color: var(--text); text-shadow: 0 2px 18px rgba(0,0,0,.5); }
 
 .end {
@@ -204,6 +206,10 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
       <div class="sl">
         <div class="sl-head"><label for="s-rythme">Rythme</label><output id="v-rythme" for="s-rythme"></output></div>
         <input type="range" id="s-rythme" min="0" max="2" step="1" value="1">
+      </div>
+      <div class="sl">
+        <div class="sl-head"><label for="s-depart">Départ</label><output id="v-depart" for="s-depart"></output></div>
+        <input type="range" id="s-depart" min="0" max="1" step="1" value="1">
       </div>
       <div class="sl">
         <div class="sl-head"><label for="s-duree">Durée</label><output id="v-duree" for="s-duree"></output></div>
@@ -262,6 +268,7 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 
 <!-- Séance -->
 <div class="hud fade-out" id="hud" aria-hidden="true">
+  <div class="tap" id="tap" hidden></div>
   <div class="hud-top">
     <span class="time" id="time">5:00</span>
     <div class="ctrls">
@@ -273,6 +280,7 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
   <div class="cue" id="cue" aria-live="off">
     <div class="word" id="word">Installez-vous</div>
     <div class="count" id="count"></div>
+    <button class="chip skip" id="calib-skip" hidden>Passer</button>
   </div>
   <div class="progress"><div id="bar"></div></div>
 </div>
@@ -307,7 +315,7 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").match
 const RYTHMES = [{ n: "Découverte", i: 4, e: 5 }, { n: "Équilibre", i: 5, e: 5 }, { n: "Apaisement", i: 4, e: 6 }];
 const SONS = ["Silence", "Bols tibétains", "Cithare", "Cithare et bols"];
 const GUIDES = ["Image seule", "Mots à l'écran", "Mots et voix"];
-const S = { scene: "maree", rythme: 1, inh: 5, exh: 5, minutes: 5, son: 3, vol: 60, guide: 1 };
+const S = { scene: "maree", rythme: 1, inh: 5, exh: 5, minutes: 5, son: 3, vol: 60, guide: 1, depart: 1 };
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -316,6 +324,7 @@ Object.assign(S, store.get("souffle.reglages", {}));
 S.scene = "maree";
 // v2 : le bol marque désormais chaque changement (toutes les 5 s) ; on l'active pour tous une fois
 if (S.sonV !== 2) { S.son = 3; S.sonV = 2; }
+if (S.departV !== 1) { S.depart = 1; S.departV = 1; }
 const wantsMusic = () => S.son === 2 || S.son === 3;
 const wantsBowl = () => S.son === 1 || S.son === 3;
 
@@ -331,17 +340,18 @@ function paintRange(el) { const p = (el.value - el.min) / (el.max - el.min) * 10
 function syncUI() {
   const r = RYTHMES[S.rythme]; S.inh = r.i; S.exh = r.e;
   const cyc = S.inh + S.exh, cycles = Math.round(S.minutes * 60 / cyc);
-  $("s-rythme").value = S.rythme; $("s-duree").value = S.minutes; $("s-son").value = S.son; $("s-vol").value = S.vol; $("s-guide").value = S.guide;
+  $("s-rythme").value = S.rythme; $("s-duree").value = S.minutes; $("s-son").value = S.son; $("s-vol").value = S.vol; $("s-guide").value = S.guide; $("s-depart").value = S.depart;
   $("v-rythme").textContent = `${r.n} · ${r.i} s / ${r.e} s`;
   $("v-duree").textContent = `${S.minutes} min · ${cycles} respirations${S.minutes === 5 ? " · 365" : ""}`;
   $("v-son").textContent = SONS[S.son];
   $("v-vol").textContent = S.son === 0 ? "—" : `${S.vol} %`;
   $("v-guide").textContent = GUIDES[S.guide];
+  $("v-depart").textContent = S.depart ? `À mon rythme, puis on ralentit${S.natural ? ` (dernier : ${S.natural}/min)` : ""}` : "Directement au rythme choisi";
   $("s-vol").disabled = S.son === 0;
   document.querySelectorAll(".sl input").forEach(paintRange);
   store.set("souffle.reglages", S);
 }
-[["s-rythme", "rythme"], ["s-duree", "minutes"], ["s-son", "son"], ["s-vol", "vol"], ["s-guide", "guide"]].forEach(([id, k]) =>
+[["s-rythme", "rythme"], ["s-duree", "minutes"], ["s-son", "son"], ["s-vol", "vol"], ["s-guide", "guide"], ["s-depart", "depart"]].forEach(([id, k]) =>
   $(id).addEventListener("input", e => { S[k] = +e.target.value; syncUI(); if (k === "vol" || k === "son") audioLevel(); }));
 
 /* ================= Rappels =================
@@ -890,7 +900,69 @@ function breathAt(ms) {
   return { b: 1 - ease((pos - inh) / (cyc - inh)), inhale: false, left: (cyc - pos) / 1000, idx: Math.floor(ms / cyc) };
 }
 
-let mode = "home";          // home | intro | run | done
+/* Démarrage adapté : la séance commence au rythme naturel mesuré, puis ralentit progressivement
+   (environ 1 min 30) jusqu'au rythme choisi, en gardant la même proportion inspiration / expiration. */
+let SCHED = null, schedI = 0;
+function buildSchedule(naturalSec) {
+  const T = (S.inh + S.exh) * 1000, rI = S.inh / (S.inh + S.exh), total = S.minutes * 60000;
+  const P = naturalSec && naturalSec * 1000 < T - 300 ? naturalSec * 1000 : T;
+  const N = P < T ? Math.max(4, Math.round(90000 / ((P + T) / 2))) : 0;
+  const cyc = []; let t = 0;
+  for (let k = 0; k < 1000; k++) {
+    const d = k < N ? P + (T - P) * ease((k + 0.5) / N) : T;
+    if (cyc.length && t + d > total + d / 2) break;
+    cyc.push({ t0: t, inh: d * rI, exh: d * (1 - rI), ramp: k < N }); t += d;
+  }
+  SCHED = { cyc, total: t, ramp: N }; schedI = 0;
+}
+function sessionBreath(ms) {
+  const c = SCHED.cyc;
+  if (schedI >= c.length || c[schedI].t0 > ms) schedI = 0;
+  while (schedI + 1 < c.length && c[schedI + 1].t0 <= ms) schedI++;
+  const cy = c[schedI], pos = ms - cy.t0;
+  if (pos < cy.inh) return { b: ease(pos / cy.inh), inhale: true, left: (cy.inh - pos) / 1000, dur: cy.inh / 1000, ramp: cy.ramp };
+  return { b: 1 - ease((pos - cy.inh) / cy.exh), inhale: false, left: Math.max(0, (cy.inh + cy.exh - pos) / 1000), dur: cy.exh / 1000, ramp: cy.ramp };
+}
+/* Mesure du rythme naturel : on touche l'écran à chaque inspiration (6 fois). */
+let taps = [], calibStart = 0, lastTapAt = -1e9;
+const TAPS = 6;
+function calibText() {
+  $("word").textContent = "Respirez naturellement";
+  $("count").textContent = `Touchez l'écran à chaque inspiration · ${taps.length} / ${TAPS}`;
+}
+function finishCalib(useTaps) {
+  let period = null;
+  if (useTaps && taps.length >= 3) {
+    const iv = taps.slice(1).map((x, i) => x - taps[i]).sort((a, b) => a - b);
+    period = Math.min(10, Math.max(2.5, iv[Math.floor(iv.length / 2)] / 1000));
+    S.natural = Math.round(60 / period); store.set("souffle.reglages", S);
+  }
+  $("tap").hidden = true; $("calib-skip").hidden = true;
+  buildSchedule(period); totalMs = SCHED.total;
+  mode = "intro";
+  const target = 60 / (S.inh + S.exh);
+  if (period && SCHED.ramp) {
+    introMs = INTRO - 3000;
+    $("word").textContent = "On démarre à votre rythme";
+    $("count").textContent = `${Math.round(60 / period)} respirations/min, puis on ralentit vers ${String(Math.round(target * 10) / 10).replace(".", ",")}`;
+  } else {
+    introMs = INTRO - 2500;
+    $("word").textContent = "C'est parti";
+    $("count").textContent = period ? "votre souffle est déjà calme : on garde ce rythme" : "";
+  }
+}
+function onTap(e) {
+  if (mode !== "calib") return;
+  e.preventDefault();
+  const now = performance.now();
+  if (now - lastTapAt < 700) return;          // évite les doubles touches
+  lastTapAt = now; taps.push(now);
+  if (AC && A && S.son !== 0) { glide(A.master.gain, 1.5 * S.vol / 100, 0.1); cithare(440, 0.05); }
+  calibText();
+  if (taps.length >= TAPS) finishCalib(true);
+}
+
+let mode = "home";          // home | calib | intro | run | done
 let paused = false, runMs = 0, introMs = 0, lastFrame = performance.now(), previewMs = 0, totalMs = 0;
 let lastPhase = null, wake = null, sceneB = 0;
 const INTRO = 4000;
@@ -901,8 +973,7 @@ function releaseAwake() { try { wake && wake.release(); } catch (e) {} wake = nu
 function show(el, on) { el.classList.toggle("fade-out", !on); el.setAttribute("aria-hidden", String(!on)); }
 
 function start() {
-  const cyc = S.inh + S.exh;
-  totalMs = Math.max(1, Math.round(S.minutes * 60 / cyc)) * cyc * 1000;
+  buildSchedule(null); totalMs = SCHED.total;
   runMs = 0; introMs = 0; paused = false; lastPhase = null; mode = "intro"; lastSwitchMin = 0; setScene(S.scene);
   audioInit(); audioStart();
   show($("home"), false); show($("hud"), true); show($("end"), false);
@@ -911,14 +982,18 @@ function start() {
   $("cue").style.visibility = "visible";
   say("Installez-vous confortablement.");
   keepAwake();
+  if (S.depart) { mode = "calib"; taps = []; calibStart = performance.now(); lastTapAt = -1e9; $("tap").hidden = false; $("calib-skip").hidden = false; calibText(); }
 }
+$("tap").addEventListener("pointerdown", onTap);
+$("calib-skip").addEventListener("click", () => { if (mode === "calib") finishCalib(false); });
 function stopSession(completed) {
   audioStop(); releaseAwake();
+  $("tap").hidden = true; $("calib-skip").hidden = true;
   try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
   show($("hud"), false);
   if (completed) {
     mode = "done"; logSession(); renderDay();
-    const cycles = Math.round(totalMs / ((S.inh + S.exh) * 1000));
+    const cycles = SCHED ? SCHED.cyc.length : Math.round(totalMs / ((S.inh + S.exh) * 1000));
     const n = (store.get("souffle.log", {})[dayKey(new Date())] || []).length;
     $("end-title").textContent = n >= 3 ? "Journée 365 accomplie" : "Séance terminée";
     $("end-text").textContent = `${cycles} respirations, ${S.minutes} minutes. ${n >= 3 ? "Trois séances aujourd'hui, bravo." : `Séance ${n} sur 3 aujourd'hui.`}`;
@@ -945,7 +1020,7 @@ document.querySelectorAll("#feel .chip").forEach(c => c.addEventListener("click"
 }));
 document.addEventListener("keydown", e => {
   if (e.code === "Space" && (mode === "run" || mode === "intro")) { e.preventDefault(); togglePause(); }
-  if (e.key === "Escape" && (mode === "run" || mode === "intro")) stopSession(false);
+  if (e.key === "Escape" && (mode === "run" || mode === "intro" || mode === "calib")) stopSession(false);
 });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && (mode === "run" || mode === "intro") && !paused) audioAlive(); if (document.visibilityState === "visible" && (mode === "run" || mode === "intro") && !wake) keepAwake(); });
 
@@ -957,6 +1032,11 @@ function frame(now) {
   if (mode === "home" || mode === "done") {
     previewMs += dt; const pv = breathAt(previewMs); b = pv.b;
     if (pv.idx !== lastPreviewIdx) { if (lastPreviewIdx >= 0 && pv.idx % 3 === 0) setScene(ORDER[(ORDER.indexOf(curScene) + 1) % ORDER.length]); lastPreviewIdx = pv.idx; }
+  } else if (mode === "calib") {
+    // l'image suit les touches : elle s'ouvre à chaque inspiration signalée, puis se repose
+    b = Math.max(0, 1 - (now - lastTapAt) / 2600) * 0.9;
+    $("time").textContent = "";
+    if (now - calibStart > 60000) finishCalib(true);
   } else if (mode === "intro") {
     if (!paused) introMs += dt;
     b = 0;
@@ -964,7 +1044,7 @@ function frame(now) {
     $("time").textContent = fmtClock(totalMs);
   } else {
     if (!paused) runMs += dt;
-    const st = breathAt(runMs); b = st.b;
+    const st = sessionBreath(runMs); b = st.b;
     if (!paused) {
       const ph = st.inhale ? "in" : "out";
       if (ph !== lastPhase) {
@@ -973,11 +1053,11 @@ function frame(now) {
         if (st.inhale && minute > lastSwitchMin && totalMs - runMs > 20000) {
           lastSwitchMin = minute; setScene(ORDER[(ORDER.indexOf(curScene) + 1) % ORDER.length]);
         }
-        const dur = st.inhale ? S.inh : S.exh;
+        const dur = st.dur;
         audioPhase(st.inhale, dur); vibe(st.inhale);
         say(st.inhale ? "Inspirez" : "Expirez");
         $("word").textContent = st.inhale ? "Inspirez" : "Expirez";
-        $("count").dataset.sub = (SUBS[curScene] || ["", ""])[st.inhale ? 0 : 1];
+        $("count").dataset.sub = (SUBS[curScene] || ["", ""])[st.inhale ? 0 : 1] + (st.ramp ? " · on ralentit peu à peu" : "");
       }
       const left = Math.ceil(st.left);
       $("count").textContent = $("count").dataset.sub + "  " + "·".repeat(Math.max(1, left));

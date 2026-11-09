@@ -16,7 +16,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
   const p = await ctx.newPage();
   await p.addInitScript(({ min }) => {
     try {
-      localStorage.setItem("souffle.reglages", JSON.stringify({ rythme: 1, minutes: min, son: 0, vol: 60, guide: 1 }));
+      localStorage.setItem("souffle.reglages", JSON.stringify({ rythme: 1, minutes: min, son: 0, vol: 60, guide: 1, depart: 0, departV: 1, sonV: 2 }));
       localStorage.removeItem("souffle.log");
     } catch (e) {}
     // horloge pilotée : l'animation n'avance que quand on le demande
