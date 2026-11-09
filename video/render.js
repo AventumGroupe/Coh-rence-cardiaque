@@ -16,7 +16,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
   const p = await ctx.newPage();
   await p.addInitScript(({ min }) => {
     try {
-      localStorage.setItem("souffle.reglages", JSON.stringify({ rythme: 1, minutes: min, son: 0, vol: 60, guide: 1, depart: 0, departV: 1, sonV: 2 }));
+      localStorage.setItem("souffle.reglages", JSON.stringify({ rythme: 1, minutes: min, minStd: min, method: "std", son: 0, vol: 60, guide: 1, depart: 0, departV: 1, sonV: 2 }));
       localStorage.removeItem("souffle.log");
     } catch (e) {}
     // horloge pilotée : l'animation n'avance que quand on le demande
@@ -61,7 +61,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
 let shot = 0;
   const t0 = Date.now();
   for (let i = 0; i < frames; i++, t += STEP) {
-    if (!started && t >= TITLE) { started = true; await p.evaluate(() => document.getElementById("start").click()); }
+    if (!started && t >= TITLE) { started = true; await p.evaluate(() => { document.getElementById("c-std").click(); document.getElementById("start").click(); }); }
     await p.evaluate(({ dt, t, ov1, ov2, wm }) => {
       window.__step(dt);
       document.getElementById("ov-title").style.opacity = ov1;
