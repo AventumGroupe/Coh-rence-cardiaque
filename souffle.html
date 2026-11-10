@@ -61,6 +61,23 @@ canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 .today-head span:first-child { font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
 .back { appearance: none; background: none; border: 0; color: var(--muted); font: inherit; font-size: .88rem; padding: 0; cursor: pointer; justify-self: start; }
 .journey { margin: 0; color: var(--muted); font-size: .9rem; max-width: 62ch; }
+.controls { display: grid; gap: 16px; }
+.field { display: grid; gap: 8px; }
+.field > .label { margin: 0; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.card { appearance: none; display: grid; gap: 2px; justify-items: center; padding: 10px 4px; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; cursor: pointer; transition: border-color .2s, background .2s; }
+.card strong { font-weight: 500; font-size: .9rem; }
+.card small { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .8rem; }
+.card em { font-style: normal; font-size: .7rem; color: var(--muted); }
+.card[aria-checked="true"] { border-color: var(--accent); background: rgba(242,184,128,.16); box-shadow: 0 0 0 1px var(--accent) inset; }
+.card[aria-checked="true"] small, .card[aria-checked="true"] em { color: var(--text); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.seg button { appearance: none; flex: 1; padding: 10px 4px; border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: .86rem; cursor: pointer; transition: background .2s; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-checked="true"] { background: var(--text); color: var(--ink); }
+.field select { appearance: none; -webkit-appearance: none; width: 100%; padding: 11px 38px 11px 12px; border-radius: 12px; border: 1px solid var(--line); color: var(--text); font: inherit; font-size: .92rem;
+  background: rgba(244,236,222,.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f4ecde' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center; }
+.field select option { background: #0d1422; color: #f4ecde; }
 .sliders { display: grid; gap: 10px; }
 .sl { display: grid; gap: 2px; }
 .sl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -215,26 +232,41 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
       Commencer
     </button>
 
-    <div class="sliders">
-      <div class="sl">
-        <div class="sl-head"><label for="s-rythme">Rythme</label><output id="v-rythme" for="s-rythme"></output></div>
-        <input type="range" id="s-rythme" min="0" max="2" step="1" value="1">
+    <div class="controls">
+      <div class="field">
+        <p class="label" id="lbl-rythme">Rythme</p>
+        <div class="cards" role="radiogroup" aria-labelledby="lbl-rythme" id="cards-rythme">
+          <button class="card" role="radio" data-r="0"><strong>Découverte</strong><small>4 s · 5 s</small><em>pour débuter</em></button>
+          <button class="card" role="radio" data-r="1"><strong>Équilibre</strong><small>5 s · 5 s</small><em>méthode 365</em></button>
+          <button class="card" role="radio" data-r="2"><strong>Apaisement</strong><small>4 s · 6 s</small><em>expiration longue</em></button>
+        </div>
       </div>
+
       <div class="sl">
         <div class="sl-head"><label for="s-duree">Durée</label><output id="v-duree" for="s-duree"></output></div>
         <input type="range" id="s-duree" min="1" max="10" step="1" value="5">
       </div>
-      <div class="sl">
-        <div class="sl-head"><label for="s-son">Son</label><output id="v-son" for="s-son"></output></div>
-        <input type="range" id="s-son" min="0" max="3" step="1" value="3">
+
+      <div class="field">
+        <label class="label" for="s-son">Son</label>
+        <select id="s-son">
+          <option value="3">Cithare et bols tibétains</option>
+          <option value="1">Bols tibétains seuls</option>
+          <option value="2">Cithare seule</option>
+          <option value="0">Silence</option>
+        </select>
       </div>
+
       <div class="sl">
         <div class="sl-head"><label for="s-vol">Volume</label><output id="v-vol" for="s-vol"></output></div>
         <input type="range" id="s-vol" min="0" max="100" step="5" value="60">
       </div>
-      <div class="sl">
-        <div class="sl-head"><label for="s-guide">Consignes</label><output id="v-guide" for="s-guide"></output></div>
-        <input type="range" id="s-guide" min="0" max="2" step="1" value="1">
+
+      <div class="field">
+        <p class="label" id="lbl-guide">Consignes</p>
+        <div class="seg" role="radiogroup" aria-labelledby="lbl-guide" id="seg-guide">
+          <button role="radio" data-g="0">Image seule</button><button role="radio" data-g="1">Mots</button><button role="radio" data-g="2">Mots et voix</button>
+        </div>
       </div>
     </div>
     <p class="note safety">Respirez par le nez, calmement, sans gonfler les poumons au maximum. Si la tête tourne, reprenez une respiration naturelle.</p>
@@ -351,18 +383,21 @@ function paintRange(el) { const p = (el.value - el.min) / (el.max - el.min) * 10
 function syncUI() {
   const r = RYTHMES[S.rythme]; S.inh = r.i; S.exh = r.e; S.depart = 0;
   const cycles = Math.round(S.minutes * 60 / (S.inh + S.exh));
-  $("s-rythme").value = S.rythme; $("s-duree").value = S.minutes; $("s-son").value = S.son; $("s-vol").value = S.vol; $("s-guide").value = S.guide;
-  $("v-rythme").textContent = `${r.n} · ${r.i} s / ${r.e} s`;
+  document.querySelectorAll("#cards-rythme .card").forEach(c => c.setAttribute("aria-checked", String(+c.dataset.r === S.rythme)));
+  document.querySelectorAll("#seg-guide button").forEach(c => c.setAttribute("aria-checked", String(+c.dataset.g === S.guide)));
+  $("s-duree").value = S.minutes; $("s-son").value = S.son; $("s-vol").value = S.vol;
   $("v-duree").textContent = `${S.minutes} min · ${cycles} respirations${S.minutes === 5 ? " · 365" : ""}`;
-  $("v-son").textContent = SONS[S.son];
   $("v-vol").textContent = S.son === 0 ? "—" : `${S.vol} %`;
-  $("v-guide").textContent = GUIDES[S.guide];
   $("s-vol").disabled = S.son === 0;
   document.querySelectorAll(".sl input").forEach(paintRange);
   store.set("souffle.reglages", S);
 }
-[["s-rythme", "rythme"], ["s-duree", "minutes"], ["s-son", "son"], ["s-vol", "vol"], ["s-guide", "guide"]].forEach(([id, k]) =>
-  $(id).addEventListener("input", e => { S[k] = +e.target.value; syncUI(); if (k === "vol" || k === "son") audioLevel(); }));
+// commandes variées : cartes (rythme), curseurs (durée, volume), liste (son), boutons segmentés (consignes)
+document.querySelectorAll("#cards-rythme .card").forEach(c => c.addEventListener("click", () => { S.rythme = +c.dataset.r; syncUI(); }));
+document.querySelectorAll("#seg-guide button").forEach(c => c.addEventListener("click", () => { S.guide = +c.dataset.g; syncUI(); }));
+$("s-duree").addEventListener("input", e => { S.minutes = +e.target.value; syncUI(); });
+$("s-vol").addEventListener("input", e => { S.vol = +e.target.value; syncUI(); audioLevel(); });
+$("s-son").addEventListener("change", e => { S.son = +e.target.value; syncUI(); audioLevel(); });
 $("edit-prog").addEventListener("click", () => { const r = $("rem"); r.open = true; r.scrollIntoView({ behavior: "smooth", block: "start" }); });
 
 /* ================= Rappels =================
