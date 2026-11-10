@@ -61,7 +61,7 @@ const TOTAL = TITLE + INTRO + RUN + 600 + OUTRO;
 let shot = 0;
   const t0 = Date.now();
   for (let i = 0; i < frames; i++, t += STEP) {
-    if (!started && t >= TITLE) { started = true; await p.evaluate(() => { document.getElementById("c-std").click(); document.getElementById("start").click(); }); }
+    if (!started && t >= TITLE) { started = true; await p.evaluate(() => document.getElementById("start").click()); }
     await p.evaluate(({ dt, t, ov1, ov2, wm }) => {
       window.__step(dt);
       document.getElementById("ov-title").style.opacity = ov1;

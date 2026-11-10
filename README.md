@@ -16,7 +16,6 @@ Au lieu de la classique boule qui monte et descend, ce sont des **paysages vivan
 ## Fonctionnalités
 
 - Les cinq paysages se succèdent automatiquement, un par minute, avec un fondu enchaîné au début d'une inspiration.
-- Départ adapté à chacun : on touche l'écran à chaque inspiration (6 fois) ; la séance démarre au rythme naturel mesuré puis ralentit progressivement (environ 1 min 30) jusqu'au rythme choisi.
 - Réglages par curseurs :
   - Rythme : Découverte 4 s / 5 s, Équilibre 5 s / 5 s, Apaisement 4 s / 6 s (expiration longue).
   - Durée : de 1 à 10 minutes (5 minutes pour la méthode 365).

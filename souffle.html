@@ -59,35 +59,7 @@ canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 .prog-times b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
 .today-head { padding-top: 4px; }
 .today-head span:first-child { font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
-.choices { display: grid; gap: 10px; }
-.choice { appearance: none; display: flex; gap: 14px; align-items: center; text-align: left; width: 100%; cursor: pointer;
-  padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(244,236,222,.05); color: var(--text); font: inherit; }
-.choice svg { width: 30px; height: 30px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.choice span { display: grid; gap: 4px; }
-.choice strong { font-family: var(--display); font-weight: 400; font-size: 1.25rem; }
-.choice small { color: var(--muted); font-size: .84rem; line-height: 1.4; }
-.choice.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.choice.main svg { stroke: var(--accent-ink); }
-.choice.main small { color: rgba(42,26,12,.75); }
-.choice:hover { filter: brightness(1.05); }
-.setup { display: grid; gap: 16px; }
 .back { appearance: none; background: none; border: 0; color: var(--muted); font: inherit; font-size: .88rem; padding: 0; cursor: pointer; justify-self: start; }
-.setup-title { font-family: var(--display); font-weight: 400; font-size: 1.45rem; margin: 0 0 4px; }
-.field { display: grid; gap: 8px; }
-.field > .label { margin: 0; }
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.card { appearance: none; display: grid; gap: 2px; justify-items: center; padding: 10px 4px; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; cursor: pointer; }
-.card strong { font-weight: 500; font-size: .9rem; } .card small { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .8rem; } .card em { font-style: normal; font-size: .7rem; color: var(--muted); }
-.card[aria-checked="true"] { border-color: var(--accent); background: rgba(242,184,128,.16); box-shadow: 0 0 0 1px var(--accent) inset; }
-.card[aria-checked="true"] em, .card[aria-checked="true"] small { color: var(--text); }
-.seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.seg button { appearance: none; flex: 1; padding: 10px 4px; border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: .86rem; cursor: pointer; }
-.seg button:first-child { border-left: 0; }
-.seg button[aria-checked="true"] { background: var(--text); color: var(--ink); }
-.field select { appearance: none; -webkit-appearance: none; width: 100%; padding: 11px 38px 11px 12px; border-radius: 12px; border: 1px solid var(--line); color: var(--text); font: inherit; font-size: .92rem;
-  background: rgba(244,236,222,.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f4ecde' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center; }
-.field select option { background: #0d1422; color: #f4ecde; }
-.panel[data-step="setup"] .day, .panel[data-step="setup"] #rem, .panel[data-step="setup"] .version { display: none; }
 .journey { margin: 0; color: var(--muted); font-size: .9rem; max-width: 62ch; }
 .sliders { display: grid; gap: 10px; }
 .sl { display: grid; gap: 2px; }
@@ -179,7 +151,6 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 .cal-link span:last-child { color: var(--accent); font-size: .82rem; }
 .cal-link:hover { background: rgba(244,236,222,.1); }
 .safety { text-align: center; font-size: .76rem; opacity: .8; }
-.start-hint { text-align: center; margin-top: -6px !important; }
 .version { text-align: center; opacity: .6; }
 .note { margin: 0; color: var(--muted); font-size: .8rem; }
 
@@ -208,19 +179,6 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 .cue .count { font-size: 1rem; color: var(--text); opacity: .85; font-variant-numeric: tabular-nums; letter-spacing: .08em; font-style: italic; }
 .progress { position: absolute; left: 0; right: 0; bottom: 0; height: calc(3px + env(safe-area-inset-bottom, 0px)); }
 .progress div { height: 3px; width: 0%; background: var(--accent); opacity: .8; }
-.howto { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; color: var(--muted); font-size: .86rem; line-height: 1.45; }
-.howto b { color: var(--text); font-weight: 500; }
-.tapring { position: absolute; left: 50%; top: 40%; width: 168px; height: 168px; margin: -84px 0 0 -84px; border-radius: 50%;
-  display: grid; place-items: center; text-align: center; border: 2px solid rgba(244,236,222,.85); background: rgba(13,20,34,.28);
-  color: var(--text); font-size: .9rem; line-height: 1.3; text-shadow: 0 1px 8px rgba(0,0,0,.5); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-  animation: ringIdle 3.2s ease-in-out infinite; }
-.tapring.hit { animation: ringHit .7s ease-out; }
-@keyframes ringIdle { 0%, 100% { box-shadow: 0 0 0 0 rgba(242,184,128,.0); } 50% { box-shadow: 0 0 0 14px rgba(242,184,128,.18); } }
-@keyframes ringHit { 0% { transform: scale(.9); background: rgba(242,184,128,.55); } 100% { transform: scale(1); background: rgba(13,20,34,.28); } }
-.tapdots { position: absolute; left: 0; right: 0; top: calc(40% + 100px); text-align: center; color: var(--accent); letter-spacing: 4px; font-size: 1.05rem; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
-@media (prefers-reduced-motion: reduce) { .tapring { animation: none; } }
-.tap { position: absolute; inset: 0; pointer-events: auto; cursor: pointer; }
-.cue .skip { pointer-events: auto; margin-top: 10px; background: rgba(13,20,34,.35); }
 .paused-note { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 1.6rem; color: var(--text); text-shadow: 0 2px 18px rgba(0,0,0,.5); }
 
 .end {
@@ -252,78 +210,34 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
       <p>6 respirations par minute · 5 min · 3 fois par jour.<br>Le cœur se cale sur le souffle, le stress retombe.</p>
     </div>
 
-    <div class="choices" id="step-choice">
-      <button class="choice main" id="c-perso">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V4.5a1.5 1.5 0 0 1 3 0V10m0-1a1.5 1.5 0 0 1 3 0v5.5A6.5 6.5 0 0 1 11.5 21h-.6a6 6 0 0 1-4.6-2.2L3.6 15.5a1.6 1.6 0 0 1 2.3-2.2L9 15.5"/></svg>
-        <span><strong>Évaluer mon rythme</strong><small>Vous touchez l'écran à chaque inspiration : la séance part de votre rythme, puis ralentit en douceur.</small></span>
-      </button>
-      <button class="choice" id="c-std">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>
-        <span><strong>Méthode standard</strong><small>Vous choisissez le rythme et la durée : la séance suit ce rythme dès le départ.</small></span>
-      </button>
-    </div>
+    <button class="start" id="start">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+      Commencer
+    </button>
 
-    <div class="setup" id="step-setup" hidden>
-      <button class="back" id="back-choice">‹ Changer de méthode</button>
-      <div><h2 class="setup-title" id="setup-title"></h2><p class="note" id="setup-desc"></p>
-        <ol class="howto" id="howto">
-          <li><b>Installez-vous</b> et respirez comme d'habitude, sans chercher à ralentir.</li>
-          <li><b>Au moment où vous commencez à inspirer</b>, touchez l'écran, n'importe où.</li>
-          <li><b>Laissez l'expiration se faire</b>, puis touchez de nouveau au début de l'inspiration suivante. Six touchers suffisent, environ 30 secondes.</li>
-          <li><b>La séance démarre à votre rythme</b>, puis ralentit en douceur jusqu'à 6 respirations par minute.</li>
-        </ol>
+    <div class="sliders">
+      <div class="sl">
+        <div class="sl-head"><label for="s-rythme">Rythme</label><output id="v-rythme" for="s-rythme"></output></div>
+        <input type="range" id="s-rythme" min="0" max="2" step="1" value="1">
       </div>
-
-      <div class="field" id="f-rythme">
-        <p class="label" id="lbl-rythme">Rythme</p>
-        <div class="cards" role="radiogroup" aria-labelledby="lbl-rythme">
-          <button class="card" role="radio" data-r="0"><strong>Découverte</strong><small>4 s · 5 s</small><em>pour débuter</em></button>
-          <button class="card" role="radio" data-r="1"><strong>Équilibre</strong><small>5 s · 5 s</small><em>méthode 365</em></button>
-          <button class="card" role="radio" data-r="2"><strong>Apaisement</strong><small>4 s · 6 s</small><em>expiration longue</em></button>
-        </div>
-      </div>
-
-      <div class="sl field" id="f-duree-std">
+      <div class="sl">
         <div class="sl-head"><label for="s-duree">Durée</label><output id="v-duree" for="s-duree"></output></div>
         <input type="range" id="s-duree" min="1" max="10" step="1" value="5">
       </div>
-
-      <div class="field" id="f-duree-perso">
-        <p class="label" id="lbl-dp">Durée</p>
-        <div class="seg" id="seg-duree" role="radiogroup" aria-labelledby="lbl-dp">
-          <button role="radio" data-m="1">1 min</button><button role="radio" data-m="2">2</button><button role="radio" data-m="3">3</button><button role="radio" data-m="4">4</button><button role="radio" data-m="5">5 min</button>
-        </div>
+      <div class="sl">
+        <div class="sl-head"><label for="s-son">Son</label><output id="v-son" for="s-son"></output></div>
+        <input type="range" id="s-son" min="0" max="3" step="1" value="3">
       </div>
-
-      <div class="field">
-        <label class="label" for="s-son">Son</label>
-        <select id="s-son">
-          <option value="3">Cithare et bols tibétains</option>
-          <option value="1">Bols tibétains seuls</option>
-          <option value="2">Cithare seule</option>
-          <option value="0">Silence</option>
-        </select>
-      </div>
-
-      <div class="sl field" id="f-vol">
+      <div class="sl">
         <div class="sl-head"><label for="s-vol">Volume</label><output id="v-vol" for="s-vol"></output></div>
         <input type="range" id="s-vol" min="0" max="100" step="5" value="60">
       </div>
-
-      <div class="field">
-        <p class="label" id="lbl-guide">Consignes</p>
-        <div class="seg" id="seg-guide" role="radiogroup" aria-labelledby="lbl-guide">
-          <button role="radio" data-g="0">Image seule</button><button role="radio" data-g="1">Mots</button><button role="radio" data-g="2">Mots et voix</button>
-        </div>
+      <div class="sl">
+        <div class="sl-head"><label for="s-guide">Consignes</label><output id="v-guide" for="s-guide"></output></div>
+        <input type="range" id="s-guide" min="0" max="2" step="1" value="1">
       </div>
-
-      <button class="start" id="start">
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
-        Commencer
-      </button>
-      <p class="note start-hint" id="start-hint"></p>
-      <p class="note safety">Respirez par le nez, calmement, sans gonfler les poumons au maximum. Si la tête tourne, reprenez une respiration naturelle.</p>
     </div>
+    <p class="note safety">Respirez par le nez, calmement, sans gonfler les poumons au maximum. Si la tête tourne, reprenez une respiration naturelle.</p>
 
     <div class="day" aria-live="polite">
       <div class="day-head"><strong>Mon programme</strong><button class="back" id="edit-prog">Modifier ›</button></div>
@@ -365,10 +279,6 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
 
 <!-- Séance -->
 <div class="hud fade-out" id="hud" aria-hidden="true">
-  <div class="tap" id="tap" hidden>
-    <div class="tapring" id="tapring"><span id="tapring-txt">Touchez<br>au début de<br>l'inspiration</span></div>
-    <div class="tapdots" id="tapdots"></div>
-  </div>
   <div class="hud-top">
     <span class="time" id="time">5:00</span>
     <div class="ctrls">
@@ -380,7 +290,6 @@ summary span:last-child { margin-left: auto; margin-right: 10px; color: var(--mu
   <div class="cue" id="cue" aria-live="off">
     <div class="word" id="word">Installez-vous</div>
     <div class="count" id="count"></div>
-    <button class="chip skip" id="calib-skip" hidden>Passer</button>
   </div>
   <div class="progress"><div id="bar"></div></div>
 </div>
@@ -439,51 +348,22 @@ const SUBS = {
 };
 
 function paintRange(el) { const p = (el.value - el.min) / (el.max - el.min) * 100; el.style.setProperty("--p", p + "%"); }
-let step = "choice";
-// la méthode choisie fixe le départ, la durée et le rythme effectivement utilisés par la séance
-function applyMethod() {
-  if (S.method === "perso") { S.depart = 1; S.minutes = S.minPerso; }
-  else { S.depart = 0; S.minutes = S.minStd; }
-  const r = RYTHMES[S.method === "perso" ? 1 : S.rythme]; S.inh = r.i; S.exh = r.e;
-}
-function showStep(st) {
-  step = st;
-  $("step-choice").hidden = st !== "choice"; $("step-setup").hidden = st !== "setup";
-  document.querySelector(".panel").dataset.step = st;
-  if (st === "setup") $("home").scrollTop = 0;
-  syncUI();
-}
 function syncUI() {
-  applyMethod();
-  const perso = S.method === "perso";
-  $("setup-title").textContent = perso ? "Mon rythme" : "Méthode standard";
-  $("setup-desc").textContent = perso
-    ? `L'application mesure d'abord votre rythme respiratoire naturel.${S.natural ? ` Dernier rythme mesuré : ${S.natural} respirations/min.` : ""}`
-    : "La séance démarre en douceur puis suit le rythme choisi.";
-  $("howto").hidden = !perso;
-  $("f-rythme").hidden = perso; $("f-duree-std").hidden = perso; $("f-duree-perso").hidden = !perso;
-  document.querySelectorAll("#f-rythme .card").forEach(c => c.setAttribute("aria-checked", String(+c.dataset.r === S.rythme)));
-  document.querySelectorAll("#seg-duree button").forEach(c => c.setAttribute("aria-checked", String(+c.dataset.m === S.minPerso)));
-  document.querySelectorAll("#seg-guide button").forEach(c => c.setAttribute("aria-checked", String(+c.dataset.g === S.guide)));
-  $("s-duree").value = S.minStd; $("s-son").value = S.son; $("s-vol").value = S.vol;
-  const cycles = Math.round(S.minStd * 60 / (S.inh + S.exh));
-  $("v-duree").textContent = `${S.minStd} min · ${cycles} respirations${S.minStd === 5 ? " · 365" : ""}`;
+  const r = RYTHMES[S.rythme]; S.inh = r.i; S.exh = r.e; S.depart = 0;
+  const cycles = Math.round(S.minutes * 60 / (S.inh + S.exh));
+  $("s-rythme").value = S.rythme; $("s-duree").value = S.minutes; $("s-son").value = S.son; $("s-vol").value = S.vol; $("s-guide").value = S.guide;
+  $("v-rythme").textContent = `${r.n} · ${r.i} s / ${r.e} s`;
+  $("v-duree").textContent = `${S.minutes} min · ${cycles} respirations${S.minutes === 5 ? " · 365" : ""}`;
+  $("v-son").textContent = SONS[S.son];
   $("v-vol").textContent = S.son === 0 ? "—" : `${S.vol} %`;
+  $("v-guide").textContent = GUIDES[S.guide];
   $("s-vol").disabled = S.son === 0;
-  $("start-hint").textContent = perso ? `${S.minPerso} min, son : ${SONS[S.son].toLowerCase()}` : `${RYTHMES[S.rythme].n}, ${S.minStd} min`;
   document.querySelectorAll(".sl input").forEach(paintRange);
   store.set("souffle.reglages", S);
 }
-$("c-perso").addEventListener("click", () => { S.method = "perso"; showStep("setup"); });
-$("c-std").addEventListener("click", () => { S.method = "std"; showStep("setup"); });
+[["s-rythme", "rythme"], ["s-duree", "minutes"], ["s-son", "son"], ["s-vol", "vol"], ["s-guide", "guide"]].forEach(([id, k]) =>
+  $(id).addEventListener("input", e => { S[k] = +e.target.value; syncUI(); if (k === "vol" || k === "son") audioLevel(); }));
 $("edit-prog").addEventListener("click", () => { const r = $("rem"); r.open = true; r.scrollIntoView({ behavior: "smooth", block: "start" }); });
-$("back-choice").addEventListener("click", () => showStep("choice"));
-document.querySelectorAll("#f-rythme .card").forEach(c => c.addEventListener("click", () => { S.rythme = +c.dataset.r; syncUI(); }));
-document.querySelectorAll("#seg-duree button").forEach(c => c.addEventListener("click", () => { S.minPerso = +c.dataset.m; syncUI(); }));
-document.querySelectorAll("#seg-guide button").forEach(c => c.addEventListener("click", () => { S.guide = +c.dataset.g; syncUI(); }));
-$("s-duree").addEventListener("input", e => { S.minStd = +e.target.value; syncUI(); });
-$("s-vol").addEventListener("input", e => { S.vol = +e.target.value; syncUI(); audioLevel(); });
-$("s-son").addEventListener("change", e => { S.son = +e.target.value; syncUI(); audioLevel(); });
 
 /* ================= Rappels =================
    Une page web ne peut pas réveiller le téléphone à heure fixe : les rappels passent donc par l'agenda,
@@ -1058,58 +938,7 @@ function sessionBreath(ms) {
   if (pos < cy.inh) return { b: ease(pos / cy.inh), inhale: true, left: (cy.inh - pos) / 1000, dur: cy.inh / 1000, ramp: cy.ramp };
   return { b: 1 - ease((pos - cy.inh) / cy.exh), inhale: false, left: Math.max(0, (cy.inh + cy.exh - pos) / 1000), dur: cy.exh / 1000, ramp: cy.ramp };
 }
-/* Mesure du rythme naturel : on touche l'écran à chaque inspiration (6 fois). */
-let taps = [], calibStart = 0, lastTapAt = -1e9;
-const TAPS = 6;
-function calibText() {
-  const n = taps.length;
-  $("tapdots").textContent = Array.from({ length: TAPS }, (_, i) => i < n ? "●" : "○").join(" ");
-  if (n === 0) {
-    $("word").textContent = "Respirez comme d'habitude";
-    $("count").textContent = "Au début de votre prochaine inspiration, touchez le cercle (ou n'importe où sur l'écran).";
-  } else {
-    $("word").textContent = n < TAPS - 1 ? "Bien. Expirez librement…" : "Encore une fois…";
-    let live = "";
-    if (n >= 3) { const iv = taps.slice(1).map((x, i) => x - taps[i]).sort((a, b) => a - b); live = ` Votre rythme : environ ${Math.round(60000 / iv[Math.floor(iv.length / 2)])} respirations/min.`; }
-    $("count").textContent = `…puis touchez au début de l'inspiration suivante.${live}`;
-  }
-}
-function finishCalib(useTaps) {
-  let period = null;
-  if (useTaps && taps.length >= 3) {
-    const iv = taps.slice(1).map((x, i) => x - taps[i]).sort((a, b) => a - b);
-    period = Math.min(10, Math.max(2.5, iv[Math.floor(iv.length / 2)] / 1000));
-    S.natural = Math.round(60 / period); store.set("souffle.reglages", S);
-  }
-  $("tap").hidden = true; $("calib-skip").hidden = true;
-  // sans mesure (bouton « Passer »), on garde la mise en route douce de la méthode standard
-  if (period) buildSchedule(period); else buildSchedule(7.5, 45000);
-  totalMs = SCHED.total;
-  mode = "intro";
-  const target = 60 / (S.inh + S.exh);
-  if (period && SCHED.ramp) {
-    introMs = INTRO - 3000;
-    $("word").textContent = "On démarre à votre rythme";
-    $("count").textContent = `${Math.round(60 / period)} respirations/min, puis on ralentit vers ${String(Math.round(target * 10) / 10).replace(".", ",")}`;
-  } else {
-    introMs = INTRO - 2500;
-    $("word").textContent = "C'est parti";
-    $("count").textContent = period ? "votre souffle est déjà calme : on garde ce rythme" : "";
-  }
-}
-function onTap(e) {
-  if (mode !== "calib") return;
-  e.preventDefault();
-  const now = performance.now();
-  if (now - lastTapAt < 700) return;          // évite les doubles touches
-  lastTapAt = now; taps.push(now);
-  const ring = $("tapring"); ring.classList.remove("hit"); void ring.offsetWidth; ring.classList.add("hit");
-  if (AC && A && S.son !== 0) { glide(A.master.gain, 1.5 * S.vol / 100, 0.1); cithare(440, 0.05); }
-  calibText();
-  if (taps.length >= TAPS) finishCalib(true);
-}
-
-let mode = "home";          // home | calib | intro | run | done
+let mode = "home";          // home | intro | run | done
 let paused = false, runMs = 0, introMs = 0, lastFrame = performance.now(), previewMs = 0, totalMs = 0;
 let lastPhase = null, wake = null, sceneB = 0;
 const INTRO = 4000;
@@ -1120,7 +949,6 @@ function releaseAwake() { try { wake && wake.release(); } catch (e) {} wake = nu
 function show(el, on) { el.classList.toggle("fade-out", !on); el.setAttribute("aria-hidden", String(!on)); }
 
 function start() {
-  applyMethod();
   // méthode standard : mise en route douce, de 8 respirations/min au rythme choisi en 45 s environ (évite l'hyperventilation)
   buildSchedule(7.5, 45000); totalMs = SCHED.total;
   runMs = 0; introMs = 0; paused = false; lastPhase = null; mode = "intro"; lastSwitchMin = 0; setScene(S.scene);
@@ -1131,13 +959,9 @@ function start() {
   $("cue").style.visibility = "visible";
   say("Installez-vous confortablement.");
   keepAwake();
-  if (S.depart) { mode = "calib"; taps = []; calibStart = performance.now(); lastTapAt = -1e9; $("tap").hidden = false; $("calib-skip").hidden = false; calibText(); }
 }
-$("tap").addEventListener("pointerdown", onTap);
-$("calib-skip").addEventListener("click", () => { if (mode === "calib") finishCalib(false); });
 function stopSession(completed) {
   audioStop(); releaseAwake();
-  $("tap").hidden = true; $("calib-skip").hidden = true;
   try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
   show($("hud"), false);
   if (completed) {
@@ -1148,7 +972,7 @@ function stopSession(completed) {
     $("end-text").textContent = `${cycles} respirations, ${S.minutes} minutes. ${n >= 3 ? "Trois séances aujourd'hui, bravo." : `Séance ${n} sur 3 aujourd'hui.`}`;
     document.querySelectorAll("#feel .chip").forEach(c => c.setAttribute("aria-pressed", "false"));
     show($("end"), true); if (AC && S.son !== 0) { glide(A.master.gain, 1.5 * S.vol / 100, 0.2); singingBowl(220, 0.3); singingBowl(440, 0.12, AC.currentTime + 1.2); setTimeout(audioStop, 8000); } say("Séance terminée. Revenez doucement.");
-  } else { mode = "home"; show($("home"), true); showStep("choice"); }
+  } else { mode = "home"; show($("home"), true); }
 }
 function setPauseIcon() {
   $("pause").innerHTML = paused ? '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>' : '<svg viewBox="0 0 16 16"><path d="M4 2h3v12H4zM9 2h3v12H9z"/></svg>';
@@ -1162,14 +986,14 @@ function togglePause() {
 $("start").addEventListener("click", start);
 $("pause").addEventListener("click", togglePause);
 $("stop").addEventListener("click", () => stopSession(false));
-$("back").addEventListener("click", () => { show($("end"), false); show($("home"), true); mode = "home"; showStep("choice"); });
+$("back").addEventListener("click", () => { show($("end"), false); show($("home"), true); mode = "home"; });
 document.querySelectorAll("#feel .chip").forEach(c => c.addEventListener("click", () => {
   document.querySelectorAll("#feel .chip").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
   const fl = store.get("souffle.feel", []); fl.push({ t: Date.now(), f: +c.dataset.f }); store.set("souffle.feel", fl.slice(-200));
 }));
 document.addEventListener("keydown", e => {
   if (e.code === "Space" && (mode === "run" || mode === "intro")) { e.preventDefault(); togglePause(); }
-  if (e.key === "Escape" && (mode === "run" || mode === "intro" || mode === "calib")) stopSession(false);
+  if (e.key === "Escape" && (mode === "run" || mode === "intro")) stopSession(false);
 });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && (mode === "run" || mode === "intro") && !paused) audioAlive(); if (document.visibilityState === "visible" && (mode === "run" || mode === "intro") && !wake) keepAwake(); });
 
@@ -1181,11 +1005,6 @@ function frame(now) {
   if (mode === "home" || mode === "done") {
     previewMs += dt; const pv = breathAt(previewMs); b = pv.b;
     if (pv.idx !== lastPreviewIdx) { if (lastPreviewIdx >= 0 && pv.idx % 3 === 0) setScene(ORDER[(ORDER.indexOf(curScene) + 1) % ORDER.length]); lastPreviewIdx = pv.idx; }
-  } else if (mode === "calib") {
-    // l'image suit les touches : elle s'ouvre à chaque inspiration signalée, puis se repose
-    b = Math.max(0, 1 - (now - lastTapAt) / 2600) * 0.9;
-    $("time").textContent = "";
-    if (now - calibStart > 60000) finishCalib(true);
   } else if (mode === "intro") {
     if (!paused) introMs += dt;
     b = 0;
@@ -1243,7 +1062,7 @@ if (hot && hot.snapshot) hot.snapshot(() => ({ S }));
 window.addEventListener("resize", () => { resize(); aurGrads = new Map(); });
 const APP_VERSION = "__APP_VERSION__";
 $("app-version").textContent = "Version " + (APP_VERSION.startsWith("__") ? "web" : APP_VERSION);
-resize(); showStep("choice"); renderDay(); renderRem();
+resize(); syncUI(); renderDay(); renderRem();
 requestAnimationFrame((n) => { lastFrame = n; frame(n); });
 })();
 </script>
