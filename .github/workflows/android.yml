@@ -1,4 +1,4 @@
-# Construit l'application Android et la publie dans « Releases ».
+# Construit l'application Android (APK de test et AAB pour Google Play) et la publie dans « Releases ».
 # La clé de signature vient des secrets SIGNING_KEYSTORE (fichier .jks en base64) et SIGNING_PASSWORD.
 name: APK Android
 
@@ -41,21 +41,22 @@ jobs:
           echo "$SIGNING_KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "SIGNING_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
-      - name: Construire l'APK
+      - name: Construire l'APK (tests) et l'AAB (Google Play)
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease bundleRelease --no-daemon
 
       - name: Renommer l'APK
         run: |
           mkdir -p dist
           cp android/app/build/outputs/apk/release/app-release.apk "dist/coherence-cardiaque-test.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/coherence-cardiaque-${{ github.run_number }}.aab"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: coherence-cardiaque-apk
-          path: dist/coherence-cardiaque-test.apk
+          name: coherence-cardiaque
+          path: dist/*
 
       # Lien de téléchargement direct, uniquement pour les APK signés avec la clé fixe.
       - name: Publier la version (Release)
@@ -66,8 +67,11 @@ jobs:
           name: Cohérence cardiaque 1.0.${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           make_latest: true
-          files: dist/coherence-cardiaque-test.apk
+          files: |
+            dist/coherence-cardiaque-test.apk
+            dist/coherence-cardiaque-${{ github.run_number }}.aab
           body: |
+            Le fichier **.aab** est à envoyer dans la Google Play Console.
             Télécharger **coherence-cardiaque-test.apk** ci-dessous, l'ouvrir sur le téléphone puis toucher « Installer » ou « Mettre à jour ».
             Lien permanent vers la dernière version :
             https://github.com/${{ github.repository }}/releases/latest/download/coherence-cardiaque-test.apk
