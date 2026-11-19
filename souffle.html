@@ -984,8 +984,8 @@ function releaseAwake() { try { wake && wake.release(); } catch (e) {} wake = nu
 function show(el, on) { el.classList.toggle("fade-out", !on); el.setAttribute("aria-hidden", String(!on)); }
 
 function start() {
-  // méthode standard : mise en route douce, de 8 respirations/min au rythme choisi en 45 s environ (évite l'hyperventilation)
-  buildSchedule(7.5, 45000); totalMs = SCHED.total;
+  // la séance suit le rythme choisi dès la première respiration (la première minute reste « sans forcer » : image à demi-ouverte)
+  buildSchedule(null); totalMs = SCHED.total;
   runMs = 0; introMs = 0; paused = false; lastPhase = null; mode = "intro"; lastSwitchMin = 0; setScene(S.scene);
   audioInit(); audioStart();
   show($("home"), false); show($("hud"), true); show($("end"), false);

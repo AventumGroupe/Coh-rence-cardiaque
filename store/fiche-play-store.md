@@ -29,7 +29,7 @@ SIMPLE À RÉGLER
 • Trois rythmes : Découverte (4 s / 5 s), Équilibre (5 s / 5 s, la méthode 365) et Apaisement (4 s / 6 s, expiration longue).
 • Une durée de 1 à 10 minutes.
 • Des consignes au choix : l'image seule, les mots à l'écran, ou les mots et la voix.
-• Une mise en route douce, pour respirer sans forcer.
+• Une première minute tout en douceur, pour respirer sans forcer.
 
 VOTRE PROGRAMME ET VOS RAPPELS
 Choisissez vos jours et vos moments (matin, midi, soir) : l'application vous envoie une notification à l'heure choisie et affiche vos séances de la semaine.
