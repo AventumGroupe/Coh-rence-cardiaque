@@ -1,0 +1,30 @@
+{
+  "name": "Cohérence cardiaque",
+  "short_name": "Cohérence",
+  "lang": "fr",
+  "description": "5 minutes de cohérence cardiaque guidée par des paysages vivants.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1422",
+  "theme_color": "#0d1422",
+  "icons": [
+    {
+      "src": "icons/icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icone-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

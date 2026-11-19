@@ -29,6 +29,10 @@ Au lieu de la classique boule qui monte et descend, ce sont des **paysages vivan
 
 Tous les paysages sont dessinés en temps réel (Canvas), sans image externe ni dépendance.
 
+## Application web (installable)
+
+`node scripts/build-web.js` fabrique dans `docs/` la version web installable (PWA) : polices embarquées, icônes, fonctionnement hors connexion. GitHub Pages la publie à l'adresse https://aventumgroupe.github.io/Coh-rence-cardiaque/ (réglage du dépôt : Settings › Pages › branche `main`, dossier `/docs`). À relancer après chaque modification de `index.html`.
+
 ## Application Android
 
 Le dossier `android/` contient le projet Capacitor. À chaque modification de `index.html` sur `main`, GitHub construit un APK de test (onglet **Actions**) et le publie dans **Releases**. Dans l'application Android, les rappels deviennent de vraies notifications du téléphone, et l'écran reste allumé pendant la séance.

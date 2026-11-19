@@ -5,7 +5,8 @@
   "description": "Application de cohérence cardiaque (méthode 365) - Soft Skills Académie",
   "scripts": {
     "build": "node scripts/build-www.js",
-    "sync": "npm run build && npx cap sync android"
+    "sync": "npm run build && npx cap sync android",
+    "build:web": "node scripts/build-web.js"
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",
