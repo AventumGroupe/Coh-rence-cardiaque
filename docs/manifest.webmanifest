@@ -1,7 +1,50 @@
 {
+  "id": "./",
   "name": "Cohérence cardiaque",
   "short_name": "Cohérence",
   "lang": "fr",
+  "dir": "ltr",
+  "categories": [
+    "health",
+    "lifestyle"
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Commencer une séance",
+      "short_name": "Séance",
+      "url": "./?seance",
+      "icons": [
+        {
+          "src": "icons/icone-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screens/accueil.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Réglages et programme"
+    },
+    {
+      "src": "screens/lotus.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Le lotus s'ouvre à l'inspiration"
+    },
+    {
+      "src": "screens/presentation.png",
+      "sizes": "1024x500",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Cohérence cardiaque"
+    }
+  ],
   "description": "5 minutes de cohérence cardiaque guidée par des paysages vivants.",
   "start_url": "./",
   "scope": "./",
